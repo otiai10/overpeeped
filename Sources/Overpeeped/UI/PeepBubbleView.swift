@@ -12,11 +12,17 @@ struct PeepBubbleView: View {
             if let text = emotion.peepText {
                 Text(text)
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color.black.opacity(0.85))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
                     .background(
-                        Capsule().fill(Color.black.opacity(0.72))
+                        Capsule()
+                            .fill(Color.white.opacity(0.95))
+                            .overlay(
+                                Capsule()
+                                    .stroke(Color.black.opacity(0.25), lineWidth: 0.8)
+                            )
+                            .shadow(color: .black.opacity(0.18), radius: 2, x: 0, y: 1)
                     )
                     .opacity(visible ? 1 : 0)
                     .scaleEffect(visible ? 1 : 0.7, anchor: .bottom)
