@@ -52,7 +52,7 @@ final class SessionStore: ObservableObject {
                 let s = try SessionState.decode(from: data)
                 loaded.append(s)
             } catch {
-                NSLog("[overpeeped] SessionStore: decode failed for \(url.lastPathComponent): \(error)")
+                Log.store.error("decode failed for \(url.lastPathComponent): \(error.localizedDescription)")
             }
         }
         // chick_uuid 順で安定化

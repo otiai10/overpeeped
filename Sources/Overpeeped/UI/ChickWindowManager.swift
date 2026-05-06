@@ -70,9 +70,15 @@ final class ChickWindowManager {
         // ハンドラ: chickUuid を capture しつつ最新の session は self.sessions から引く
         window.onClick = { [weak self] in
             guard let self = self, let s = self.sessions[chickUuid] else { return }
+            let label: String = {
+                if let n = s.nickname, !n.isEmpty { return "\(n)/\(s.projectName)" }
+                return s.projectName
+            }()
+            Log.click.info("chick=\(label) session=\(s.sessionId.prefix(8)) pane=\(s.ghosttyTerminalUuid.prefix(8)) cwd=\(s.cwd)")
             GhosttyAdapter.focus(terminalUUID: s.ghosttyTerminalUuid)
         }
         window.onDragEnd = { [weak self] origin in
+            Log.drag.info("chick=\(chickUuid.prefix(8)) origin=(\(Int(origin.x)),\(Int(origin.y)))")
             self?.positionStore.save(position: origin, for: chickUuid)
         }
 

@@ -30,7 +30,7 @@ final class FileWatcher {
         let path = (url.path as NSString).fileSystemRepresentation
         fd = open(path, O_EVTONLY)
         guard fd >= 0 else {
-            NSLog("[overpeeped] FileWatcher: open() failed for \(url.path) errno=\(errno)")
+            Log.watcher.error("open() failed for \(self.url.path) errno=\(errno)")
             return
         }
         let s = DispatchSource.makeFileSystemObjectSource(

@@ -70,7 +70,7 @@ final class PositionStore {
             try data.write(to: tmp, options: .atomic)
             _ = try? FileManager.default.replaceItemAt(url, withItemAt: tmp)
         } catch {
-            NSLog("[overpeeped] PositionStore.persist failed: \(error)")
+            Log.position.error("persist failed: \(error.localizedDescription)")
             try? FileManager.default.removeItem(at: tmp)
         }
     }
