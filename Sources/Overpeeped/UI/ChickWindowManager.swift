@@ -33,7 +33,7 @@ final class ChickWindowManager {
         for (uuid, session) in newDict {
             if let existing = windows[uuid] {
                 // 既存ウィンドウの content を最新の session で再描画
-                existing.contentView = NSHostingView(rootView: ChickView(session: session))
+                existing.contentView = ChickHostingView(rootView: ChickView(session: session))
             } else {
                 let window = createWindow(for: session)
                 windows[uuid] = window
@@ -54,7 +54,7 @@ final class ChickWindowManager {
             backing: .buffered,
             defer: false
         )
-        window.contentView = NSHostingView(rootView: ChickView(session: session))
+        window.contentView = ChickHostingView(rootView: ChickView(session: session))
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false

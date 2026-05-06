@@ -160,3 +160,43 @@ SwiftUI で `.onTapGesture` を持つと `NSHostingView` が click を消費し�
 - `ChickView` は表示専用 (Tap 検出を持たない)
 - `ChickWindow` の mouseDown/mouseDragged/mouseUp で全部捌く
 - `.help()` (tooltip) は hover 用なので残しても click は消費しない
+
+### マウスオーバー時のカーソル変更 (pointer)
+`NSHostingView` をサブクラスして `resetCursorRects` をオーバーライドし、`addCursorRect(bounds, cursor: .pointingHand)`。
+OS が rect の入退出を勝手に処理してくれるので mouseEntered/Exited を手動で扱わなくて済む。`onHover` + `NSCursor.set()` よりロバスト。
+
+## Phase 4
+
+### SVG/PNG vs SwiftUI Canvas
+SPEC §11 は「SVG → PNG ラスタライズで Resources/sprites/*.png」を想定。だが今回は **SwiftUI Canvas で ASCII テキストから直接描画** する方式に変更:
+- 外部依存 (ImageMagick / rsvg-convert) ゼロ
+- Resources / Bundle 管理不要
+- 解像度独立 (HiDPI で綺麗)
+- 表情の調整は 1 ファイル (`ChickSprites.swift`) で完結
+
+Cell サイズは描画時に枠サイズ ÷ grid 幅で決まる。Path の `floor(x)` + `ceil(width + 0.5)` で隣接セル間に隙間が出ないようにする (アンチエイリアス対策)。
+
+### ASCII を pixel grid に変換するときの validation
+タイポで列数がズレるとレイアウト崩壊。debug build で全行 16 文字に揃っているか `assert` する:
+```swift
+#if DEBUG
+assert(art.height == 16)
+for (i, row) in art.cells.enumerated() {
+    assert(row.count == 16, "row \(i) width=\(row.count) (must be 16)")
+}
+#endif
+```
+
+### TimelineView で時刻ベースのフレーム index
+`Timer.publish(every: interval)` で interval を Emotion ごとに変えると publisher の identity が変わって subscription 不安定。
+**`TimelineView(.periodic(from: .now, by: interval))`** だと SwiftUI が timeline を一括管理し、`context.date` から絶対時刻ベースで index を計算できる。Emotion 切替で frame index reset を考えなくてよい:
+```swift
+TimelineView(.periodic(from: .now, by: interval)) { context in
+    let elapsed = context.date.timeIntervalSinceReferenceDate
+    let idx = Int(elapsed / interval) % frames.count
+    PixelArtView(art: frames[idx])
+}
+```
+
+### SPEC §11 との解釈差: 「ドット絵」
+SPEC §11 は実 PNG ファイル (SVG → ラスタライズ) を想定。今回は SwiftUI Canvas で同じ pixel 粒度を実現したので結果は同じ。実装コスト (アセット管理 vs. コード描画) と保守性で後者を選んだ。SPEC は "想定実装"、結果が同じなら逸脱して OK という判断。
