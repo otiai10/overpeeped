@@ -9,7 +9,9 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "Overpeeped",
-            path: "Sources/Overpeeped"
+            path: "Sources/Overpeeped",
+            // Resources/skill/ は install.sh が repo から直接コピーするので bundle 不要
+            exclude: ["Resources/skill"]
         ),
         .testTarget(
             name: "OverpeepedTests",

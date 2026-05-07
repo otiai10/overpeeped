@@ -6,8 +6,12 @@ import SwiftUI
 /// - 下端: ラベル (nickname または project_name)
 ///
 /// クリック検出は ChickWindow 側 (5px 閾値で drag/click 区別)。ここはイベントを持たない。
+///
+/// `isOrphan = true` のときは ghostty_terminal_uuid が指す terminal が消えている状態
+/// (Ghostty 再起動 / pane close 等)。グレースケール + 半透明で「迷子」感を出す。
 struct ChickView: View {
     let session: SessionState
+    var isOrphan: Bool = false
 
     @State private var now: Date = Date()
 
@@ -15,10 +19,10 @@ struct ChickView: View {
         EmotionEngine.emotion(for: session, now: now)
     }
 
-    /// 一瞥して識別できるラベル: nickname > project_name
+    /// 一瞥して識別できるラベル: nickname > project_name (orphan なら先頭に "?")
     private var label: String {
-        if let n = session.nickname, !n.isEmpty { return n }
-        return session.projectName
+        let base = (session.nickname?.isEmpty == false) ? session.nickname! : session.projectName
+        return isOrphan ? "? \(base)" : base
     }
 
     private var tooltip: String {
@@ -67,8 +71,11 @@ struct ChickView: View {
             .padding(.bottom, 2)
         }
         .frame(width: 128, height: 128)
+        .saturation(isOrphan ? 0 : 1)
+        .opacity(isOrphan ? 0.55 : 1)
         .help(tooltip)
         .animation(.easeInOut(duration: 0.25), value: emotion)
+        .animation(.easeInOut(duration: 0.4), value: isOrphan)
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
             now = date
         }

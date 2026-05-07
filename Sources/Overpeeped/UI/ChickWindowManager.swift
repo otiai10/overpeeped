@@ -14,6 +14,7 @@ final class ChickWindowManager {
     private let positionStore: PositionStore
     private var windows: [String: ChickWindow] = [:]      // chick_uuid → window
     private var sessions: [String: SessionState] = [:]    // chick_uuid → latest session
+    private var orphans: Set<String> = []                 // chick_uuid: terminal が消えた
 
     init(positionStore: PositionStore) {
         self.positionStore = positionStore
@@ -27,15 +28,32 @@ final class ChickWindowManager {
         for uuid in removed {
             windows[uuid]?.close()
             windows.removeValue(forKey: uuid)
+            orphans.remove(uuid)
         }
 
-        // 2. 追加 / 更新
+        // 2. orphan 検出: Ghostty 側の terminal id 集合と照合
+        if let known = GhosttyAdapter.allTerminalIds() {
+            var newOrphans: Set<String> = []
+            for (uuid, s) in newDict where !known.contains(s.ghosttyTerminalUuid) {
+                newOrphans.insert(uuid)
+            }
+            for uuid in newOrphans.subtracting(orphans) {
+                Log.click.info("orphan detected chick=\(uuid.prefix(8)) — terminal vanished")
+            }
+            for uuid in orphans.subtracting(newOrphans) {
+                Log.click.info("orphan recovered chick=\(uuid.prefix(8)) — terminal reappeared")
+            }
+            orphans = newOrphans
+        }
+        // Ghostty 不在 / AppleScript 失敗時は orphans を据え置き
+
+        // 3. 追加 / 更新
         for (uuid, session) in newDict {
+            let isOrphan = orphans.contains(uuid)
             if let existing = windows[uuid] {
-                // 既存ウィンドウの content を最新の session で再描画
-                existing.contentView = ChickHostingView(rootView: ChickView(session: session))
+                existing.contentView = ChickHostingView(rootView: ChickView(session: session, isOrphan: isOrphan))
             } else {
-                let window = createWindow(for: session)
+                let window = createWindow(for: session, isOrphan: isOrphan)
                 windows[uuid] = window
                 window.makeKeyAndOrderFront(nil)
             }
@@ -46,7 +64,7 @@ final class ChickWindowManager {
 
     // MARK: - Private
 
-    private func createWindow(for session: SessionState) -> ChickWindow {
+    private func createWindow(for session: SessionState, isOrphan: Bool) -> ChickWindow {
         let chickUuid = session.chickUuid
         let window = ChickWindow(
             contentRect: NSRect(x: 0, y: 0, width: 128, height: 128),
@@ -54,7 +72,7 @@ final class ChickWindowManager {
             backing: .buffered,
             defer: false
         )
-        window.contentView = ChickHostingView(rootView: ChickView(session: session))
+        window.contentView = ChickHostingView(rootView: ChickView(session: session, isOrphan: isOrphan))
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false

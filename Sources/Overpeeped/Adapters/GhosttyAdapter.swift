@@ -70,4 +70,41 @@ enum GhosttyAdapter {
     private static func short(_ id: String) -> String {
         String(id.prefix(8))
     }
+
+    /// 現在 Ghostty に存在するすべての terminal id を返す。
+    /// Ghostty が起動していない / AppleScript 不許可 等で失敗したら nil。
+    /// orphan 検出に使う。
+    static func allTerminalIds() -> Set<String>? {
+        let script = """
+        tell application "Ghostty"
+          set acc to ""
+          repeat with w in windows
+            repeat with t in tabs of w
+              repeat with term in terminals of t
+                set acc to acc & (id of term as string) & "\n"
+              end repeat
+            end repeat
+          end repeat
+          return acc
+        end tell
+        """
+
+        let task = Process()
+        task.launchPath = "/usr/bin/osascript"
+        task.arguments = ["-e", script]
+        let outPipe = Pipe()
+        task.standardOutput = outPipe
+        task.standardError = Pipe()
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+            guard task.terminationStatus == 0 else { return nil }
+            let raw = String(data: outPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+            let ids = raw.split(whereSeparator: { $0 == "\n" || $0 == "\r" }).map { String($0) }
+            return Set(ids.filter { !$0.isEmpty })
+        } catch {
+            return nil
+        }
+    }
 }
