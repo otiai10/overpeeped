@@ -39,8 +39,10 @@ struct PeepBubbleView: View {
             visible = (emotion.peepText != nil)
         }
         .onReceive(Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()) { _ in
-            if emotion.peepText != nil {
-                visible.toggle()
+            if emotion.isThoughtBubble {
+                visible = true        // 思考バブルは点滅させずずっと表示
+            } else if emotion.peepText != nil {
+                visible.toggle()      // 鳴き声は 1.5 秒間隔フラッシュ
             } else {
                 visible = false
             }

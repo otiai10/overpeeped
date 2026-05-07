@@ -4,10 +4,14 @@ import Foundation
 enum EmotionEngine {
     static func emotion(state: SessionState.State, elapsedSinceStateChange seconds: TimeInterval) -> Emotion {
         switch state {
+        case .thinking:
+            return .thinking
+
         case .working:
             return .focused
 
-        case .waiting:
+        case .asking, .idle:
+            // 入力待ちは経過時間で熱を上げていく (黄 → 橙 → 真っ赤 → 焼き鳥)
             switch seconds {
             case ..<30:    return .expectant
             case ..<120:   return .impatient

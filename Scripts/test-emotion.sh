@@ -20,19 +20,21 @@ set -euo pipefail
 EMOTION="${1:-}"
 if [ -z "$EMOTION" ]; then
   echo "Usage: bash Scripts/test-emotion.sh <emotion>" >&2
-  echo "  emotion: focused | expectant | impatient | angry | sad | happy | lonely | sulking" >&2
+  echo "  emotion: thinking | focused | asking | expectant | impatient | angry | sad | happy | lonely | sulking" >&2
   exit 2
 fi
 
 case "$EMOTION" in
-  working|focused) STATE="working"; OFFSET_SEC=0 ;;
-  expectant)       STATE="waiting"; OFFSET_SEC=0 ;;
-  impatient)       STATE="waiting"; OFFSET_SEC=60 ;;     # > 30s
-  angry)           STATE="waiting"; OFFSET_SEC=180 ;;    # > 120s
-  sad)             STATE="waiting"; OFFSET_SEC=360 ;;    # > 300s
-  happy)           STATE="done";    OFFSET_SEC=0 ;;
-  lonely)          STATE="done";    OFFSET_SEC=120 ;;    # > 60s
-  sulking)         STATE="done";    OFFSET_SEC=360 ;;    # > 300s
+  thinking)        STATE="thinking"; OFFSET_SEC=0 ;;
+  working|focused) STATE="working";  OFFSET_SEC=0 ;;
+  asking)          STATE="asking";   OFFSET_SEC=0 ;;     # permission_request
+  expectant)       STATE="idle";     OFFSET_SEC=0 ;;
+  impatient)       STATE="idle";     OFFSET_SEC=60 ;;    # > 30s
+  angry)           STATE="idle";     OFFSET_SEC=180 ;;   # > 120s
+  sad)             STATE="idle";     OFFSET_SEC=360 ;;   # > 300s
+  happy)           STATE="done";     OFFSET_SEC=0 ;;
+  lonely)          STATE="done";     OFFSET_SEC=120 ;;   # > 60s
+  sulking)         STATE="done";     OFFSET_SEC=360 ;;   # > 300s
   *)
     echo "Unknown emotion: $EMOTION" >&2
     exit 2

@@ -392,9 +392,17 @@ enum ChickSprites {
         """),
     ]
 
+    // ─────────────────────────────────────────────────────────────
+    // thinking — ツール選定中。chick 本体は focused (右向き歩行) を流用し、
+    // 「考え中」表現は ChickView の balloon (💭) に集約する。
+    // frameDuration は 800ms にしてゆっくり歩かせる (working 320ms とのコントラスト)。
+    // ─────────────────────────────────────────────────────────────
+    static let thinking: [PixelArt] = focused
+
     // MARK: - Lookup
     static func frames(for emotion: Emotion) -> [PixelArt] {
         switch emotion {
+        case .thinking:  return thinking
         case .focused:   return focused
         case .expectant: return expectant
         case .impatient: return impatient
@@ -409,6 +417,7 @@ enum ChickSprites {
     /// SPEC §5 のフレームスピード方針: 200-500ms。表情ごとに速度変える。
     static func frameDurationMs(for emotion: Emotion) -> Int {
         switch emotion {
+        case .thinking:                   return 800   // 考え中: ゆったり
         case .focused:                    return 320   // 歩行リズム
         case .lonely, .sulking:           return 600   // ゆったり / 静止
         case .expectant:                  return 350

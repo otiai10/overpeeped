@@ -38,7 +38,7 @@ final class SessionStateTests: XCTestCase {
           "project_name": "p",
           "nickname": "ピー助",
           "cwd": "/",
-          "state": "waiting",
+          "state": "asking",
           "started_at": "2026-01-01T00:00:00Z",
           "last_activity_at": "2026-01-01T00:00:00Z",
           "last_state_change_at": "2026-01-01T00:00:00Z"
@@ -46,7 +46,27 @@ final class SessionStateTests: XCTestCase {
         """.data(using: .utf8)!
         let s = try SessionState.decode(from: json)
         XCTAssertEqual(s.nickname, "ピー助")
-        XCTAssertEqual(s.state, .waiting)
+        XCTAssertEqual(s.state, .asking)
+    }
+
+    /// 旧スキーマ "waiting" は backward compat で .idle に decode される
+    func testLegacyWaitingDecodesAsIdle() throws {
+        let json = """
+        {
+          "chick_uuid": "abc",
+          "session_id": "s1",
+          "ghostty_terminal_uuid": "g1",
+          "project_name": "p",
+          "nickname": null,
+          "cwd": "/",
+          "state": "waiting",
+          "started_at": "2026-01-01T00:00:00Z",
+          "last_activity_at": "2026-01-01T00:00:00Z",
+          "last_state_change_at": "2026-01-01T00:00:00Z"
+        }
+        """.data(using: .utf8)!
+        let s = try SessionState.decode(from: json)
+        XCTAssertEqual(s.state, .idle)
     }
 
     func testIDEqualsChickUuid() throws {

@@ -88,11 +88,12 @@ merge_hook() {
   ' "$CLAUDE_SETTINGS" > "$TMP" && mv "$TMP" "$CLAUDE_SETTINGS"
 }
 
-merge_hook "Notification" "$HOOKS_DST/notification.sh"
-merge_hook "Stop"         "$HOOKS_DST/stop.sh"
-merge_hook "PreToolUse"   "$HOOKS_DST/pre-tool-use.sh"
-merge_hook "PostToolUse"  "$HOOKS_DST/post-tool-use.sh"
-merge_hook "SessionEnd"   "$HOOKS_DST/session-end.sh"
+merge_hook "Notification"     "$HOOKS_DST/notification.sh"
+merge_hook "Stop"             "$HOOKS_DST/stop.sh"
+merge_hook "PreToolUse"       "$HOOKS_DST/pre-tool-use.sh"
+merge_hook "PostToolUse"      "$HOOKS_DST/post-tool-use.sh"
+merge_hook "SessionEnd"       "$HOOKS_DST/session-end.sh"
+merge_hook "UserPromptSubmit" "$HOOKS_DST/user-prompt-submit.sh"
 
 echo ""
 echo "✨ overpeeped (Phase 2) installed."

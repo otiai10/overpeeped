@@ -18,9 +18,26 @@ struct SessionState: Codable, Equatable, Identifiable {
     var id: String { chickUuid }
 
     enum State: String, Codable, CaseIterable {
-        case working
-        case waiting
-        case done
+        case thinking   // UserPromptSubmit ~ 最初の PreToolUse まで (ツール選定中)
+        case working    // PreToolUse / PostToolUse 中 (ツール実行中)
+        case asking     // Notification (reason=permission_request) — 許可待ち
+        case idle       // Notification (reason=idle / その他) — 単なる入力待ち
+        case done       // Stop — 応答完了
+
+        // 旧スキーマ "waiting" を idle にマップする backward compat
+        init(from decoder: Decoder) throws {
+            let container = try decoder.singleValueContainer()
+            let raw = try container.decode(String.self)
+            switch raw {
+            case "thinking": self = .thinking
+            case "working":  self = .working
+            case "asking":   self = .asking
+            case "idle":     self = .idle
+            case "waiting":  self = .idle      // legacy
+            case "done":     self = .done
+            default:         self = .working   // unknown は安全側で working
+            }
+        }
     }
 }
 
