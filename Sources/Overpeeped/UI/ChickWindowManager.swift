@@ -15,9 +15,24 @@ final class ChickWindowManager {
     private var windows: [String: ChickWindow] = [:]      // chick_uuid → window
     private var sessions: [String: SessionState] = [:]    // chick_uuid → latest session
     private var orphans: Set<String> = []                 // chick_uuid: terminal が消えた
+    private(set) var allHidden: Bool = false              // hideAll の効いている状態
 
     init(positionStore: PositionStore) {
         self.positionStore = positionStore
+    }
+
+    func hideAll() {
+        allHidden = true
+        for window in windows.values { window.orderOut(nil) }
+    }
+
+    func showAll() {
+        allHidden = false
+        for window in windows.values { window.orderFront(nil) }
+    }
+
+    func toggleVisibility() {
+        allHidden ? showAll() : hideAll()
     }
 
     func update(sessions newSessions: [SessionState]) {

@@ -21,10 +21,14 @@ enum OverpeepedMain {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let store = SessionStore()
     private let manager = ChickWindowManager(positionStore: PositionStore())
+    private var menuBar: MenuBarController?
     private var cancellable: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         store.start()
+        // メニューバーアイコン (NSStatusItem) は SessionStore を直接購読するので
+        // ここでセットアップしておけばあとは自動で更新される
+        menuBar = MenuBarController(store: store, manager: manager)
         cancellable = store.$sessions
             .receive(on: DispatchQueue.main)
             .sink { [weak self] sessions in
