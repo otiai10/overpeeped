@@ -15,6 +15,9 @@ SKILL_DST="$HOME/.claude/skills/peep"
 OVERPEEPED_DIR="$HOME/.overpeeped"
 HOOKS_DST="$OVERPEEPED_DIR/hooks"
 CLAUDE_SETTINGS="$HOME/.claude/settings.json"
+APP_BUNDLE_SRC="$REPO_DIR/Overpeeped.app"
+APP_BUNDLE_DST="$HOME/Applications/Overpeeped.app"
+CLI_DST="$HOME/.local/bin/overpeeped"
 
 if ! command -v jq >/dev/null 2>&1; then
   echo "Error: jq が見つかりません。'brew install jq' でインストールしてください。" >&2
@@ -95,14 +98,50 @@ merge_hook "PostToolUse"      "$HOOKS_DST/post-tool-use.sh"
 merge_hook "SessionEnd"       "$HOOKS_DST/session-end.sh"
 merge_hook "UserPromptSubmit" "$HOOKS_DST/user-prompt-submit.sh"
 
+# ─────────────────────────────────────────────────────────────
+# 5. Overpeeped.app を ~/Applications/ にコピー (無ければ build.sh を呼ぶ)
+# ─────────────────────────────────────────────────────────────
+echo "==> Overpeeped.app: $APP_BUNDLE_DST"
+if [ ! -d "$APP_BUNDLE_SRC" ]; then
+  echo "  Overpeeped.app が無いのでビルドします (Scripts/build.sh)"
+  bash "$SCRIPT_DIR/build.sh"
+fi
+
+mkdir -p "$(dirname "$APP_BUNDLE_DST")"
+rm -rf "$APP_BUNDLE_DST"
+cp -R "$APP_BUNDLE_SRC" "$APP_BUNDLE_DST"
+echo "  copied $APP_BUNDLE_SRC → $APP_BUNDLE_DST"
+
+# ─────────────────────────────────────────────────────────────
+# 6. CLI ランチャー ~/.local/bin/overpeeped
+#    `overpeeped` でアプリを起動できるようにする (open -a 経由)
+# ─────────────────────────────────────────────────────────────
+echo "==> CLI launcher: $CLI_DST"
+mkdir -p "$(dirname "$CLI_DST")"
+cat > "$CLI_DST" <<'CLI'
+#!/bin/bash
+# overpeeped CLI launcher — Overpeeped.app をフォアグラウンド起動する薄いラッパ
+exec open -a Overpeeped "$@"
+CLI
+chmod +x "$CLI_DST"
+
+# PATH チェック
+PATH_HINT=""
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) ;;
+  *) PATH_HINT="yes" ;;
+esac
+
 echo ""
-echo "✨ overpeeped (Phase 2) installed."
+echo "✨ overpeeped installed."
 echo ""
-echo "次のステップ:"
-echo "  1. swift build -c release  (もしくは swift run)"
-echo "  2. Ghostty で claude を起動"
-echo "  3. /peep を実行 → 画面右下に🐥が浮かぶ"
-echo "  4. 質問入力で working、応答完了で done(happy→lonely→sulking) を観察"
-echo "  5. /peep stop でヒナ消滅、/exit で SessionEnd hook により消滅"
+echo "  GUI 起動    : open -a Overpeeped     (or Spotlight で 'Overpeeped')"
+echo "  CLI 起動    : overpeeped"
+echo "  Claude セッション内: /peep / /peep status / /peep stop / /peep nickname <名前>"
 echo ""
+if [ -n "$PATH_HINT" ]; then
+  echo "⚠  ~/.local/bin が PATH にありません。次のいずれかを ~/.zshrc に追加してください:"
+  echo '     export PATH="$HOME/.local/bin:$PATH"'
+  echo ""
+fi
 echo "既存 settings.json は $BACKUP にバックアップ済み (壊れたら戻せます)"
