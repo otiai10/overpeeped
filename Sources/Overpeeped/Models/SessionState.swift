@@ -44,8 +44,9 @@ struct SessionState: Codable, Equatable, Identifiable {
     enum State: String, Codable, CaseIterable {
         case thinking   // UserPromptSubmit ~ 最初の PreToolUse まで (ツール選定中)
         case working    // PreToolUse / PostToolUse 中 (ツール実行中)
-        case asking     // Notification (reason=permission_request) — 許可待ち
-        case idle       // Notification (reason=idle / その他) — 単なる入力待ち
+        case asking     // user の入力を待っている状態: Notification (permission_request) /
+                        //                          PreToolUse (AskUserQuestion, ExitPlanMode)
+        case idle       // Notification (idle / その他) — 単なる入力待ち
         case done       // Stop — 応答完了
 
         // 旧スキーマ "waiting" を idle にマップする backward compat
