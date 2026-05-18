@@ -29,7 +29,7 @@ final class MenuBarController: NSObject {
 
         if let button = statusItem.button {
             button.title = "🐥"
-            button.toolTip = "overpeeped — Claude Code session monitor"
+            button.toolTip = AgentAdapters.defaultAdapter.statusToolTip
         }
         statusItem.menu = menu
 
@@ -61,7 +61,7 @@ final class MenuBarController: NSObject {
 
         // ─── 各 chick
         if sessions.isEmpty {
-            let empty = NSMenuItem(title: "ヒナはまだいません  (Claude Code セッション内で /peep)", action: nil, keyEquivalent: "")
+            let empty = NSMenuItem(title: "ヒナはまだいません  (\(AgentAdapters.defaultAdapter.emptyStateHint))", action: nil, keyEquivalent: "")
             empty.isEnabled = false
             menu.addItem(empty)
         } else {
@@ -116,16 +116,16 @@ final class MenuBarController: NSObject {
 
         let item = NSMenuItem(title: title, action: #selector(chickClicked(_:)), keyEquivalent: "")
         item.target = self
-        item.representedObject = session.ghosttyTerminalUuid
+        item.representedObject = session.terminal
         return item
     }
 
     // MARK: - Actions
 
     @objc private func chickClicked(_ sender: NSMenuItem) {
-        guard let uuid = sender.representedObject as? String else { return }
-        Log.click.info("via menubar pane=\(uuid.prefix(8))")
-        GhosttyAdapter.focus(terminalUUID: uuid)
+        guard let terminal = sender.representedObject as? TerminalRef else { return }
+        Log.click.info("via menubar terminal=\(terminal.id.shortLogId) kind=\(terminal.kind)")
+        TerminalAdapters.focus(terminal)
     }
 
     @objc private func toggleVisibility() {

@@ -17,3 +17,8 @@ enum Log {
     static let watcher  = Logger(subsystem: subsystem, category: "watcher")
     static let position = Logger(subsystem: subsystem, category: "position")
 }
+
+extension String {
+    /// chick_uuid / session_id / terminal id をログ用に 8 文字に切り詰めた表示。
+    var shortLogId: String { String(prefix(8)) }
+}

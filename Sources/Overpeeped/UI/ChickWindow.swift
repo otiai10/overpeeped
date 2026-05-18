@@ -3,7 +3,7 @@ import AppKit
 /// borderless / 透明 / floating な NSWindow。
 ///
 /// クリックとドラッグを `dragThreshold` (5px, SPEC §6) で区別する:
-/// - 5px 以下しか動かなかった → `onClick` 発火 (= GhosttyAdapter.focus)
+/// - 5px 以下しか動かなかった → `onClick` 発火 (= TerminalAdapter.focus)
 /// - 5px を超えて動いた → `performDrag(with:)` でウィンドウ移動 → `onDragEnd` 発火 (= 位置永続化)
 ///
 /// NSWindow.performDrag(with:) は modal: 呼び出すとマウスを離すまでブロックする。

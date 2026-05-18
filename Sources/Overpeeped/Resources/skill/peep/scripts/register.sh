@@ -82,8 +82,14 @@ jq -n \
   --arg now "$NOW" \
   '{
     chick_uuid: $chick_uuid,
-    session_id: $session_id,
-    ghostty_terminal_uuid: $ghostty_term,
+    agent: {
+      kind: "claude_code",
+      session_id: $session_id
+    },
+    terminal: {
+      kind: "ghostty",
+      id: $ghostty_term
+    },
     project_name: $project_name,
     nickname: null,
     cwd: $cwd,
