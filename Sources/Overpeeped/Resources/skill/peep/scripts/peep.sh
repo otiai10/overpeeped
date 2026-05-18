@@ -23,15 +23,8 @@ case "$SUBCMD" in
     exec bash "$SCRIPT_DIR/nickname.sh" "$@"
     ;;
   *)
-    cat >&2 <<EOM
-Unknown /peep subcommand: $SUBCMD
-
-Usage:
-  /peep                       現在のセッションをヒナ化
-  /peep status                状態確認
-  /peep stop                  監視終了
-  /peep nickname <name>       ヒナに名前をつける
-EOM
-    exit 2
+    # それ以外の文字列は nickname つきの新規登録として扱う
+    # (予約語 status/stop/nickname は上で吸い取り済み)
+    exec bash "$SCRIPT_DIR/register.sh" "$SUBCMD"
     ;;
 esac

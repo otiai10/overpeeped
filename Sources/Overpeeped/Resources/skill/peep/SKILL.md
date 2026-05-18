@@ -1,6 +1,6 @@
 ---
 name: peep
-description: overpeeped (デスクトップマスコットアプリ) に Claude Code セッションを登録する。`/peep` でセッションをヒナ化、`/peep status` で状態確認、`/peep stop` で監視終了、`/peep nickname <名前>` で命名。並列に走る複数の Claude Code セッションを忘れずに見守りたいときに使う。
+description: overpeeped (デスクトップマスコットアプリ) に Claude Code セッションを登録する。`/peep` でセッションをヒナ化 (`/peep <名前>` で命名しつつ登録)、`/peep status` で状態確認、`/peep stop` で監視終了、`/peep nickname <名前>` で命名/改名。並列に走る複数の Claude Code セッションを忘れずに見守りたいときに使う。
 allowed-tools: Bash
 ---
 
@@ -27,8 +27,9 @@ CLAUDE_SESSION_ID='${CLAUDE_SESSION_ID}' bash '${CLAUDE_SKILL_DIR}/scripts/peep.
 | 引数 | 動作 |
 |---|---|
 | (なし) | 現在のセッションを overpeeped に登録 (ヒナが孵る) |
+| `<name>` | ヒナを孵すと同時に名前をつける (予約語 `status` / `stop` / `nickname` は除く) |
 | `status` | 登録状態と経過時間を表示 |
 | `stop` | このセッションの監視を終了 (ヒナが消える) |
-| `nickname <name>` | ヒナに名前をつける |
+| `nickname <name>` | 既存のヒナを命名/改名する |
 
 dispatcher (`peep.sh`) が `$ARGUMENTS` を見て該当のスクリプトに振り分けます。Claude 側でサブコマンドの解釈や条件分岐は不要です。

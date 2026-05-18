@@ -1,9 +1,11 @@
 #!/bin/bash
-# register.sh — /peep
+# register.sh — /peep [<nickname>]
 # 現在の Claude Code セッションを overpeeped に登録する。
+# 第1引数があれば nickname として同時に設定する。
 set -euo pipefail
 
 SESSION_ID="${CLAUDE_SESSION_ID:-}"
+NICKNAME_ARG="${1:-}"
 if [ -z "$SESSION_ID" ]; then
   echo "Error: CLAUDE_SESSION_ID が未設定です (skill 経由で呼ばれていない可能性)。" >&2
   exit 1
@@ -60,6 +62,13 @@ CWD="$(pwd)"
 PROJECT_NAME="${CWD##*/}"
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
+# nickname は引数があればそれを使い、無ければ null のまま
+if [ -n "$NICKNAME_ARG" ]; then
+  NICKNAME_JQ_VAL="$NICKNAME_ARG"
+else
+  NICKNAME_JQ_VAL=""
+fi
+
 # ─────────────────────────────────────────────────────────────
 # 4. session ファイルを atomic に作成
 # ─────────────────────────────────────────────────────────────
@@ -71,6 +80,7 @@ jq -n \
   --arg terminal_kind "$TERMINAL_KIND" \
   --arg terminal_id "$TERMINAL_ID" \
   --arg project_name "$PROJECT_NAME" \
+  --arg nickname "$NICKNAME_JQ_VAL" \
   --arg cwd "$CWD" \
   --arg now "$NOW" \
   '{
@@ -84,7 +94,7 @@ jq -n \
       id: $terminal_id
     },
     project_name: $project_name,
-    nickname: null,
+    nickname: (if $nickname == "" then null else $nickname end),
     cwd: $cwd,
     state: "working",
     started_at: $now,
@@ -104,4 +114,8 @@ mv "$TMP" "$INDEX_FILE"
 # ─────────────────────────────────────────────────────────────
 # 6. ユーザーへの応答
 # ─────────────────────────────────────────────────────────────
-echo "ぴよっ! 🐥 ($PROJECT_NAME) のヒナが孵りました"
+if [ -n "$NICKNAME_ARG" ]; then
+  echo "ぴよっ! 🐥 ($NICKNAME_ARG / $PROJECT_NAME) のヒナが孵りました"
+else
+  echo "ぴよっ! 🐥 ($PROJECT_NAME) のヒナが孵りました"
+fi

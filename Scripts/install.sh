@@ -137,7 +137,7 @@ echo "✨ overpeeped installed."
 echo ""
 echo "  GUI 起動    : open -a Overpeeped     (or Spotlight で 'Overpeeped')"
 echo "  CLI 起動    : overpeeped"
-echo "  Claude セッション内: /peep / /peep status / /peep stop / /peep nickname <名前>"
+echo "  Claude セッション内: /peep [<名前>] / /peep status / /peep stop / /peep nickname <名前>"
 echo ""
 if [ -n "$PATH_HINT" ]; then
   echo "⚠  ~/.local/bin が PATH にありません。次のいずれかを ~/.zshrc に追加してください:"
