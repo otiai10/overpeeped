@@ -22,11 +22,42 @@ final class SessionStateTests: XCTestCase {
         let s = try SessionState.decode(from: json)
         XCTAssertEqual(s.chickUuid, "550e8400-e29b-41d4-a716-446655440000")
         XCTAssertEqual(s.sessionId, "claude-sess-abc123")
-        XCTAssertEqual(s.ghosttyTerminalUuid, "ghostty-term-xyz789")
+        XCTAssertEqual(s.agent, .claudeCode(sessionId: "claude-sess-abc123"))
+        XCTAssertEqual(s.terminal, .ghostty(id: "ghostty-term-xyz789"))
+        XCTAssertEqual(s.terminal.id, "ghostty-term-xyz789")
         XCTAssertEqual(s.projectName, "triax-hub")
         XCTAssertNil(s.nickname)
         XCTAssertEqual(s.cwd, "/Users/hiromu/src/triax/hub")
         XCTAssertEqual(s.state, .working)
+    }
+
+    func testDecodeAdapterSchemaJSON() throws {
+        let json = """
+        {
+          "chick_uuid": "550e8400-e29b-41d4-a716-446655440000",
+          "agent": {
+            "kind": "claude_code",
+            "session_id": "claude-sess-abc123"
+          },
+          "terminal": {
+            "kind": "ghostty",
+            "id": "ghostty-term-xyz789"
+          },
+          "project_name": "triax-hub",
+          "nickname": null,
+          "cwd": "/Users/hiromu/src/triax/hub",
+          "state": "working",
+          "started_at": "2026-05-06T10:30:00Z",
+          "last_activity_at": "2026-05-06T10:32:15Z",
+          "last_state_change_at": "2026-05-06T10:31:45Z"
+        }
+        """.data(using: .utf8)!
+
+        let s = try SessionState.decode(from: json)
+        XCTAssertEqual(s.agent.kind, AgentSessionRef.claudeCodeKind)
+        XCTAssertEqual(s.sessionId, "claude-sess-abc123")
+        XCTAssertEqual(s.terminal.kind, TerminalRef.ghosttyKind)
+        XCTAssertEqual(s.terminal.id, "ghostty-term-xyz789")
     }
 
     func testDecodeWithNickname() throws {
@@ -71,7 +102,9 @@ final class SessionStateTests: XCTestCase {
 
     func testIDEqualsChickUuid() throws {
         let s = SessionState(
-            chickUuid: "the-id", sessionId: "x", ghosttyTerminalUuid: "y",
+            chickUuid: "the-id",
+            agent: .claudeCode(sessionId: "x"),
+            terminal: .ghostty(id: "y"),
             projectName: "p", nickname: nil, cwd: "/",
             state: .done,
             startedAt: Date(), lastActivityAt: Date(), lastStateChangeAt: Date()

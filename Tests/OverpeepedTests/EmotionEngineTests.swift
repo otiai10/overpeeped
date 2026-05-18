@@ -67,7 +67,9 @@ final class EmotionEngineTests: XCTestCase {
     func testEmotionFromSession() {
         let now = Date()
         let s = SessionState(
-            chickUuid: "x", sessionId: "y", ghosttyTerminalUuid: "z",
+            chickUuid: "x",
+            agent: .claudeCode(sessionId: "y"),
+            terminal: .ghostty(id: "z"),
             projectName: "p", nickname: nil, cwd: "/",
             state: .idle,
             startedAt: now,

@@ -7,8 +7,8 @@ import SwiftUI
 ///
 /// クリック検出は ChickWindow 側 (5px 閾値で drag/click 区別)。ここはイベントを持たない。
 ///
-/// `isOrphan = true` のときは ghostty_terminal_uuid が指す terminal が消えている状態
-/// (Ghostty 再起動 / pane close 等)。グレースケール + 半透明で「迷子」感を出す。
+/// `isOrphan = true` のときは terminal が消えている状態。
+/// terminal app 再起動 / pane close 等ではグレースケール + 半透明で「迷子」感を出す。
 struct ChickView: View {
     let session: SessionState
     var isOrphan: Bool = false

@@ -46,21 +46,27 @@ final class ChickWindowManager {
             orphans.remove(uuid)
         }
 
-        // 2. orphan 検出: Ghostty 側の terminal id 集合と照合
-        if let known = GhosttyAdapter.allTerminalIds() {
+        // 2. orphan 検出: kind ごとに adapter から terminal id 集合を取り、newDict と照合する。
+        //    adapter が nil を返した kind (terminal app 不在 / AppleScript 失敗) の session は
+        //    前回の orphan 状態を据え置く。どの kind も応答しなければ orphans 全体を据え置く。
+        var idsByKind: [String: Set<String>] = [:]
+        for kind in Set(newDict.values.map(\.terminal.kind)) {
+            if let ids = TerminalAdapters.allTerminalIds(for: kind) {
+                idsByKind[kind] = ids
+            }
+        }
+        if !idsByKind.isEmpty {
             var newOrphans: Set<String> = []
-            for (uuid, s) in newDict where !known.contains(s.ghosttyTerminalUuid) {
-                newOrphans.insert(uuid)
+            for (uuid, s) in newDict {
+                if let known = idsByKind[s.terminal.kind] {
+                    if !known.contains(s.terminal.id) { newOrphans.insert(uuid) }
+                } else if orphans.contains(uuid) {
+                    newOrphans.insert(uuid)
+                }
             }
-            for uuid in newOrphans.subtracting(orphans) {
-                Log.click.info("orphan detected chick=\(uuid.prefix(8)) — terminal vanished")
-            }
-            for uuid in orphans.subtracting(newOrphans) {
-                Log.click.info("orphan recovered chick=\(uuid.prefix(8)) — terminal reappeared")
-            }
+            logOrphanChanges(from: orphans, to: newOrphans)
             orphans = newOrphans
         }
-        // Ghostty 不在 / AppleScript 失敗時は orphans を据え置き
 
         // 3. 追加 / 更新
         for (uuid, session) in newDict {
@@ -107,11 +113,11 @@ final class ChickWindowManager {
                 if let n = s.nickname, !n.isEmpty { return "\(n)/\(s.projectName)" }
                 return s.projectName
             }()
-            Log.click.info("chick=\(label) session=\(s.sessionId.prefix(8)) pane=\(s.ghosttyTerminalUuid.prefix(8)) cwd=\(s.cwd)")
-            GhosttyAdapter.focus(terminalUUID: s.ghosttyTerminalUuid)
+            Log.click.info("chick=\(label) agent=\(s.agent.kind) session=\(s.sessionId.shortLogId) terminal=\(s.terminal.id.shortLogId) kind=\(s.terminal.kind) cwd=\(s.cwd)")
+            TerminalAdapters.focus(s.terminal)
         }
         window.onDragEnd = { [weak self] origin in
-            Log.drag.info("chick=\(chickUuid.prefix(8)) origin=(\(Int(origin.x)),\(Int(origin.y)))")
+            Log.drag.info("chick=\(chickUuid.shortLogId) origin=(\(Int(origin.x)),\(Int(origin.y)))")
             self?.positionStore.save(position: origin, for: chickUuid)
         }
 
@@ -130,5 +136,14 @@ final class ChickWindowManager {
             x: f.maxX - size.width - 32,
             y: f.minY + 32 + CGFloat(stackIndex) * 150
         )
+    }
+
+    private func logOrphanChanges(from oldOrphans: Set<String>, to newOrphans: Set<String>) {
+        for uuid in newOrphans.subtracting(oldOrphans) {
+            Log.click.info("orphan detected chick=\(uuid.shortLogId) — terminal vanished")
+        }
+        for uuid in oldOrphans.subtracting(newOrphans) {
+            Log.click.info("orphan recovered chick=\(uuid.shortLogId) — terminal reappeared")
+        }
     }
 }

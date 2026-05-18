@@ -8,14 +8,14 @@ import Foundation
 /// - `focus term` で pane 選択 + window 前面化 (ただし tab 切り替えはしない)
 ///
 /// なので両方を呼ぶ必要がある。詳細は LESSONS.md Phase 0 を参照。
-enum GhosttyAdapter {
+struct GhosttyTerminalAdapter: TerminalAdapter {
     @discardableResult
-    static func focus(terminalUUID: String) -> Bool {
+    func focus(id terminalId: String) -> Bool {
         // 成功時は "<winId>|<tabId>|<workingDir>" を return して Swift 側でパースしてログる
         let script = """
         tell application "Ghostty"
           activate
-          set targetID to "\(terminalUUID)"
+          set targetID to "\(terminalId)"
           repeat with w in windows
             repeat with t in tabs of w
               repeat with term in terminals of t
@@ -53,12 +53,12 @@ enum GhosttyAdapter {
                 let winId = parts.indices.contains(0) ? parts[0] : "?"
                 let tabId = parts.indices.contains(1) ? parts[1] : "?"
                 let dir   = parts.indices.contains(2) ? parts[2] : "?"
-                Log.focus.info("ok pane=\(short(terminalUUID)) win=\(winId) tab=\(tabId) dir=\(dir)")
+                Log.focus.info("ok terminal=\(terminalId.shortLogId) win=\(winId) tab=\(tabId) dir=\(dir)")
                 return true
             } else {
                 let errStr = (String(data: errPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? "(unknown)")
                     .trimmingCharacters(in: .whitespacesAndNewlines)
-                Log.focus.error("FAIL pane=\(short(terminalUUID)) status=\(task.terminationStatus) err=\(errStr)")
+                Log.focus.error("FAIL terminal=\(terminalId.shortLogId) status=\(task.terminationStatus) err=\(errStr)")
                 return false
             }
         } catch {
@@ -67,14 +67,10 @@ enum GhosttyAdapter {
         }
     }
 
-    private static func short(_ id: String) -> String {
-        String(id.prefix(8))
-    }
-
     /// 現在 Ghostty に存在するすべての terminal id を返す。
     /// Ghostty が起動していない / AppleScript 不許可 等で失敗したら nil。
     /// orphan 検出に使う。
-    static func allTerminalIds() -> Set<String>? {
+    func allTerminalIds() -> Set<String>? {
         let script = """
         tell application "Ghostty"
           set acc to ""
