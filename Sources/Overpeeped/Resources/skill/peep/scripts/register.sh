@@ -38,25 +38,17 @@ if [ -n "$EXISTING" ]; then
 fi
 
 # ─────────────────────────────────────────────────────────────
-# 2. Ghostty terminal UUID を AppleScript で取得
+# 2. 現在の terminal を判別し、その pane/window id を取得
 # ─────────────────────────────────────────────────────────────
-# `/peep` を打った瞬間その terminal はフォーカスされているので
-# `focused terminal of selected tab of front window` が確実に当該 terminal を指す。
-GHOSTTY_TERM_UUID=$(osascript <<'OSA' 2>&1
-tell application "Ghostty"
-  return id of focused terminal of selected tab of front window
-end tell
-OSA
-)
-OSA_STATUS=$?
-if [ "$OSA_STATUS" -ne 0 ] || [ -z "$GHOSTTY_TERM_UUID" ]; then
-  cat >&2 <<EOM
-Error: Ghostty terminal UUID の取得に失敗しました。
-  - Ghostty 1.3.0+ が起動していますか?
-  - Ghostty が前面ウィンドウになっていますか?
-  - System Settings → Privacy & Security → Automation で claude (もしくは shell) → Ghostty が許可されていますか?
-osascript output: $GHOSTTY_TERM_UUID
-EOM
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+DETECT_OUT=$("$SCRIPT_DIR/detect-terminal.sh") || {
+  echo "Error: terminal の検出に失敗しました (detect-terminal.sh 参照)。" >&2
+  exit 1
+}
+TERMINAL_KIND="${DETECT_OUT%$'\t'*}"
+TERMINAL_ID="${DETECT_OUT#*$'\t'}"
+if [ -z "$TERMINAL_KIND" ] || [ -z "$TERMINAL_ID" ] || [ "$TERMINAL_KIND" = "$TERMINAL_ID" ]; then
+  echo "Error: detect-terminal.sh の出力が不正です: '$DETECT_OUT'" >&2
   exit 1
 fi
 
@@ -76,7 +68,8 @@ TMP=$(mktemp)
 jq -n \
   --arg chick_uuid "$CHICK_UUID" \
   --arg session_id "$SESSION_ID" \
-  --arg ghostty_term "$GHOSTTY_TERM_UUID" \
+  --arg terminal_kind "$TERMINAL_KIND" \
+  --arg terminal_id "$TERMINAL_ID" \
   --arg project_name "$PROJECT_NAME" \
   --arg cwd "$CWD" \
   --arg now "$NOW" \
@@ -87,8 +80,8 @@ jq -n \
       session_id: $session_id
     },
     terminal: {
-      kind: "ghostty",
-      id: $ghostty_term
+      kind: $terminal_kind,
+      id: $terminal_id
     },
     project_name: $project_name,
     nickname: null,
