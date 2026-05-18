@@ -17,5 +17,8 @@ struct ClaudeCodeAgentAdapter: AgentAdapter {
 }
 
 enum AgentAdapters {
+    /// 現状サポートする agent が Claude Code 1 種のみなので、UI 文言用の
+    /// 既定 adapter を 1 個だけ持つ。複数 agent (Cursor / Aider 等) を扱う
+    /// ようになったら、active session の agent.kind から動的に組む形へ拡張する。
     static let defaultAdapter: any AgentAdapter = ClaudeCodeAgentAdapter()
 }
