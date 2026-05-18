@@ -22,9 +22,9 @@ final class SessionStateTests: XCTestCase {
         let s = try SessionState.decode(from: json)
         XCTAssertEqual(s.chickUuid, "550e8400-e29b-41d4-a716-446655440000")
         XCTAssertEqual(s.sessionId, "claude-sess-abc123")
-        XCTAssertEqual(s.ghosttyTerminalUuid, "ghostty-term-xyz789")
         XCTAssertEqual(s.agent, .claudeCode(sessionId: "claude-sess-abc123"))
         XCTAssertEqual(s.terminal, .ghostty(id: "ghostty-term-xyz789"))
+        XCTAssertEqual(s.terminal.id, "ghostty-term-xyz789")
         XCTAssertEqual(s.projectName, "triax-hub")
         XCTAssertNil(s.nickname)
         XCTAssertEqual(s.cwd, "/Users/hiromu/src/triax/hub")
@@ -57,7 +57,7 @@ final class SessionStateTests: XCTestCase {
         XCTAssertEqual(s.agent.kind, AgentSessionRef.claudeCodeKind)
         XCTAssertEqual(s.sessionId, "claude-sess-abc123")
         XCTAssertEqual(s.terminal.kind, TerminalRef.ghosttyKind)
-        XCTAssertEqual(s.ghosttyTerminalUuid, "ghostty-term-xyz789")
+        XCTAssertEqual(s.terminal.id, "ghostty-term-xyz789")
     }
 
     func testDecodeWithNickname() throws {

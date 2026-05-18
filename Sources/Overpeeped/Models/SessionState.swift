@@ -40,7 +40,6 @@ struct SessionState: Codable, Equatable, Identifiable {
 
     var id: String { chickUuid }
     var sessionId: String { agent.sessionId }
-    var ghosttyTerminalUuid: String { terminal.id }
 
     enum State: String, Codable, CaseIterable {
         case thinking   // UserPromptSubmit ~ 最初の PreToolUse まで (ツール選定中)
