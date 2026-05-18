@@ -22,9 +22,10 @@
 ```sh
 git clone git@github.com:otiai10/overpeeped.git
 cd overpeeped
-./Scripts/build.sh        # Overpeeped.app を生成 (ad-hoc 署名)
-./Scripts/install.sh      # 全部入り: skill / hooks / .app / CLI launcher
+make install              # build + 全部入り (skill / hooks / .app / CLI launcher)
 ```
+
+個別ターゲット: `make build` / `make run` (= `swift run`) / `make test` / `make clean`
 
 `install.sh` がやること:
 
