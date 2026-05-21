@@ -1,8 +1,8 @@
 #!/bin/bash
-# register.sh — /peep [<nickname>] [--model <id>]
+# register.sh — /peep [<nickname>] [--model|-m <id>]
 # 現在の Claude Code セッションを overpeeped に登録する。
 #   - 位置引数があれば nickname として同時に設定する。
-#   - --model <id> でマスコット種 (chick / lizard / …) を指定する。省略時は既定 (chick)。
+#   - --model <id> / -m <id> でマスコット種 (chick / lizard / …) を指定する。省略時は既定 (chick)。
 set -euo pipefail
 
 SESSION_ID="${CLAUDE_SESSION_ID:-}"
@@ -12,13 +12,13 @@ if [ -z "$SESSION_ID" ]; then
 fi
 
 # ─────────────────────────────────────────────────────────────
-# 0. 引数パース: 位置引数 = nickname / --model <id> = マスコット種
+# 0. 引数パース: 位置引数 = nickname / --model <id> | -m <id> = マスコット種
 # ─────────────────────────────────────────────────────────────
 NICKNAME_ARG=""
 MASCOT_MODEL=""
 while [ $# -gt 0 ]; do
   case "$1" in
-    --model)
+    --model|-m)
       MASCOT_MODEL="${2:-}"
       shift
       [ $# -gt 0 ] && shift
@@ -26,6 +26,14 @@ while [ $# -gt 0 ]; do
     --model=*)
       MASCOT_MODEL="${1#--model=}"
       shift
+      ;;
+    -m=*)
+      MASCOT_MODEL="${1#-m=}"
+      shift
+      ;;
+    -*)
+      echo "Error: 不明なオプション '$1' です。マスコット種は '--model <id>' または '-m <id>' で指定してください。" >&2
+      exit 2
       ;;
     *)
       [ -z "$NICKNAME_ARG" ] && NICKNAME_ARG="$1"

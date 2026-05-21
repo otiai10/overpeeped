@@ -10,8 +10,8 @@ SUBCMD="${1:-}"
 shift || true
 
 case "$SUBCMD" in
-  ""|--model|--model=*)
-    # 引数なし、または先頭が --model … (nickname 無しで種だけ指定)
+  ""|--model|--model=*|-m|-m=*)
+    # 引数なし、または先頭が --model / -m … (nickname 無しで種だけ指定)
     exec bash "$SCRIPT_DIR/register.sh" "$SUBCMD" "$@"
     ;;
   status)
