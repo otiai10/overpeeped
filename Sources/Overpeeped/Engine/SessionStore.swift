@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 /// `~/.overpeeped/sessions/` 配下の JSON 群を真実の源として
-/// `[chick_uuid: SessionState]` を ObservableObject で公開する。
+/// `[mascot_uuid: SessionState]` を ObservableObject で公開する。
 ///
 /// - FileWatcher がディレクトリ変更を通知 → reload() で全ファイル読み直し
 /// - JSON が壊れているファイルはスキップ (失敗で全体停止しない)
@@ -55,8 +55,8 @@ final class SessionStore: ObservableObject {
                 Log.store.error("decode failed for \(url.lastPathComponent): \(error.localizedDescription)")
             }
         }
-        // chick_uuid 順で安定化
-        loaded.sort { $0.chickUuid < $1.chickUuid }
+        // mascot_uuid 順で安定化
+        loaded.sort { $0.mascotUuid < $1.mascotUuid }
         sessions = loaded
     }
 }

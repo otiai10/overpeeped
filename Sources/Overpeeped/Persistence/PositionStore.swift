@@ -5,7 +5,7 @@ import Foundation
 ///
 /// JSON スキーマ:
 /// ```json
-/// { "<chick_uuid>": {"x": 1.0, "y": 2.0}, ... }
+/// { "<mascot_uuid>": {"x": 1.0, "y": 2.0}, ... }
 /// ```
 ///
 /// SPEC §6: 「ユーザーがドラッグ移動した位置は positions.json に永続化」
@@ -24,17 +24,17 @@ final class PositionStore {
             .appendingPathComponent(".overpeeped/positions.json")
     }
 
-    func position(for chickUuid: String) -> CGPoint? {
-        positions[chickUuid]
+    func position(for mascotUuid: String) -> CGPoint? {
+        positions[mascotUuid]
     }
 
-    func save(position: CGPoint, for chickUuid: String) {
-        positions[chickUuid] = position
+    func save(position: CGPoint, for mascotUuid: String) {
+        positions[mascotUuid] = position
         persist()
     }
 
-    func remove(chickUuid: String) {
-        positions.removeValue(forKey: chickUuid)
+    func remove(mascotUuid: String) {
+        positions.removeValue(forKey: mascotUuid)
         persist()
     }
 

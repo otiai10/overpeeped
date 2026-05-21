@@ -38,15 +38,9 @@ final class EmotionEngineTests: XCTestCase {
         XCTAssertEqual(EmotionEngine.emotion(state: .done, elapsedSinceStateChange: 9999), .sulking)
     }
 
-    // MARK: balloon 仕様
-    func testFocusedAndSulkingAreSilent() {
-        XCTAssertNil(Emotion.focused.peepText)
-        XCTAssertNil(Emotion.sulking.peepText)
-    }
-
+    // MARK: balloon 仕様 — 💭 思考バブルは Emotion 側、鳴き声は MascotModel 側 (MascotModelTests)
     func testThinkingShowsThoughtBubble() {
-        // thinking は 鳴き声ではなく 💭 思考バブル (常時表示)
-        XCTAssertEqual(Emotion.thinking.peepText, "💭")
+        // thinking だけが 💭 思考バブル (常時表示)
         XCTAssertTrue(Emotion.thinking.isThoughtBubble)
     }
 
@@ -56,21 +50,14 @@ final class EmotionEngineTests: XCTestCase {
         }
     }
 
-    func testEmotionsWithBalloonAreVocal() {
-        let silent: Set<Emotion> = [.focused, .sulking]
-        for e in Emotion.allCases where !silent.contains(e) {
-            XCTAssertNotNil(e.peepText, "\(e) should show a balloon")
-        }
-    }
-
     // MARK: SessionState からの計算
     func testEmotionFromSession() {
         let now = Date()
         let s = SessionState(
-            chickUuid: "x",
+            mascotUuid: "x",
             agent: .claudeCode(sessionId: "y"),
             terminal: .ghostty(id: "z"),
-            projectName: "p", nickname: nil, cwd: "/",
+            projectName: "p", nickname: nil, mascotModel: nil, cwd: "/",
             state: .idle,
             startedAt: now,
             lastActivityAt: now,

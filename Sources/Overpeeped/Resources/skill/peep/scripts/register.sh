@@ -1,15 +1,38 @@
 #!/bin/bash
-# register.sh — /peep [<nickname>]
+# register.sh — /peep [<nickname>] [--model <id>]
 # 現在の Claude Code セッションを overpeeped に登録する。
-# 第1引数があれば nickname として同時に設定する。
+#   - 位置引数があれば nickname として同時に設定する。
+#   - --model <id> でマスコット種 (chick / lizard / …) を指定する。省略時は既定 (chick)。
 set -euo pipefail
 
 SESSION_ID="${CLAUDE_SESSION_ID:-}"
-NICKNAME_ARG="${1:-}"
 if [ -z "$SESSION_ID" ]; then
   echo "Error: CLAUDE_SESSION_ID が未設定です (skill 経由で呼ばれていない可能性)。" >&2
   exit 1
 fi
+
+# ─────────────────────────────────────────────────────────────
+# 0. 引数パース: 位置引数 = nickname / --model <id> = マスコット種
+# ─────────────────────────────────────────────────────────────
+NICKNAME_ARG=""
+MASCOT_MODEL=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --model)
+      MASCOT_MODEL="${2:-}"
+      shift
+      [ $# -gt 0 ] && shift
+      ;;
+    --model=*)
+      MASCOT_MODEL="${1#--model=}"
+      shift
+      ;;
+    *)
+      [ -z "$NICKNAME_ARG" ] && NICKNAME_ARG="$1"
+      shift
+      ;;
+  esac
+done
 
 OVERPEEPED_DIR="$HOME/.overpeeped"
 SESSIONS_DIR="$OVERPEEPED_DIR/sessions"
@@ -55,36 +78,32 @@ if [ -z "$TERMINAL_KIND" ] || [ -z "$TERMINAL_ID" ] || [ "$TERMINAL_KIND" = "$TE
 fi
 
 # ─────────────────────────────────────────────────────────────
-# 3. chick_uuid 生成 + メタデータ収集
+# 3. mascot_uuid 生成 + メタデータ収集
 # ─────────────────────────────────────────────────────────────
-CHICK_UUID=$(uuidgen)
+MASCOT_UUID=$(uuidgen)
 CWD="$(pwd)"
 PROJECT_NAME="${CWD##*/}"
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-# nickname は引数があればそれを使い、無ければ null のまま
-if [ -n "$NICKNAME_ARG" ]; then
-  NICKNAME_JQ_VAL="$NICKNAME_ARG"
-else
-  NICKNAME_JQ_VAL=""
-fi
-
 # ─────────────────────────────────────────────────────────────
 # 4. session ファイルを atomic に作成
+#    nickname / mascot_model は未指定なら null。未知の mascot_model でも
+#    Swift 側が既定 (chick) にフォールバックするのでここでは検証しない。
 # ─────────────────────────────────────────────────────────────
-SESSION_FILE="$SESSIONS_DIR/${CHICK_UUID}.json"
+SESSION_FILE="$SESSIONS_DIR/${MASCOT_UUID}.json"
 TMP=$(mktemp)
 jq -n \
-  --arg chick_uuid "$CHICK_UUID" \
+  --arg mascot_uuid "$MASCOT_UUID" \
   --arg session_id "$SESSION_ID" \
   --arg terminal_kind "$TERMINAL_KIND" \
   --arg terminal_id "$TERMINAL_ID" \
   --arg project_name "$PROJECT_NAME" \
-  --arg nickname "$NICKNAME_JQ_VAL" \
+  --arg nickname "$NICKNAME_ARG" \
+  --arg mascot_model "$MASCOT_MODEL" \
   --arg cwd "$CWD" \
   --arg now "$NOW" \
   '{
-    chick_uuid: $chick_uuid,
+    mascot_uuid: $mascot_uuid,
     agent: {
       kind: "claude_code",
       session_id: $session_id
@@ -95,6 +114,7 @@ jq -n \
     },
     project_name: $project_name,
     nickname: (if $nickname == "" then null else $nickname end),
+    mascot_model: (if $mascot_model == "" then null else $mascot_model end),
     cwd: $cwd,
     state: "working",
     started_at: $now,
@@ -107,15 +127,19 @@ mv "$TMP" "$SESSION_FILE"
 # 5. index.json を atomic に更新
 # ─────────────────────────────────────────────────────────────
 TMP=$(mktemp)
-jq --arg sid "$SESSION_ID" --arg cuid "$CHICK_UUID" \
-  '. + {($sid): $cuid}' "$INDEX_FILE" > "$TMP"
+jq --arg sid "$SESSION_ID" --arg muid "$MASCOT_UUID" \
+  '. + {($sid): $muid}' "$INDEX_FILE" > "$TMP"
 mv "$TMP" "$INDEX_FILE"
 
 # ─────────────────────────────────────────────────────────────
 # 6. ユーザーへの応答
 # ─────────────────────────────────────────────────────────────
+MODEL_NOTE=""
+if [ -n "$MASCOT_MODEL" ]; then
+  MODEL_NOTE=" [モデル: $MASCOT_MODEL]"
+fi
 if [ -n "$NICKNAME_ARG" ]; then
-  echo "ぴよっ! 🐥 ($NICKNAME_ARG / $PROJECT_NAME) のヒナが孵りました"
+  echo "ぴよっ! 🐥 ($NICKNAME_ARG / $PROJECT_NAME) のヒナが孵りました${MODEL_NOTE}"
 else
-  echo "ぴよっ! 🐥 ($PROJECT_NAME) のヒナが孵りました"
+  echo "ぴよっ! 🐥 ($PROJECT_NAME) のヒナが孵りました${MODEL_NOTE}"
 fi

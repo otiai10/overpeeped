@@ -145,7 +145,7 @@ override func mouseUp(with event: NSEvent) {
 別の `@MainActor` 型の `init(x: Foo = Foo())` のデフォルト引数は **caller の context で評価される** ため、Swift 6 では「nonisolated context から MainActor init 呼んでる」と弾かれる。
 解決:
 - デフォルト引数を消して呼び出し側で明示的に渡す
-- AppDelegate (@MainActor) のプロパティ初期化なら `private let manager = ChickWindowManager(positionStore: PositionStore())` と書ける
+- AppDelegate (@MainActor) のプロパティ初期化なら `private let manager = MascotWindowManager(positionStore: PositionStore())` と書ける
 
 ### PositionStore の atomic write
 `FileManager.replaceItemAt(_:withItemAt:)` は tmp と本物を入れ替える atomic 操作。中間状態を絶対に作らない。
@@ -154,11 +154,11 @@ try data.write(to: tmp, options: .atomic)
 _ = try FileManager.default.replaceItemAt(url, withItemAt: tmp)
 ```
 
-### ChickView から onTapGesture を外して NSWindow にイベントを集約
+### MascotView から onTapGesture を外して NSWindow にイベントを集約
 SwiftUI で `.onTapGesture` を持つと `NSHostingView` が click を消費して NSWindow まで届かない。
 **drag/click を NSWindow 側で 1 箇所に統一** するため:
-- `ChickView` は表示専用 (Tap 検出を持たない)
-- `ChickWindow` の mouseDown/mouseDragged/mouseUp で全部捌く
+- `MascotView` は表示専用 (Tap 検出を持たない)
+- `MascotWindow` の mouseDown/mouseDragged/mouseUp で全部捌く
 - `.help()` (tooltip) は hover 用なので残しても click は消費しない
 
 ### マウスオーバー時のカーソル変更 (pointer)
@@ -172,7 +172,7 @@ SPEC §11 は「SVG → PNG ラスタライズで Resources/sprites/*.png」を�
 - 外部依存 (ImageMagick / rsvg-convert) ゼロ
 - Resources / Bundle 管理不要
 - 解像度独立 (HiDPI で綺麗)
-- 表情の調整は 1 ファイル (`ChickSprites.swift`) で完結
+- 表情の調整は creature 種ごとに 1 ファイル (`ChickModel.swift` / `LizardModel.swift` 等) で完結
 
 Cell サイズは描画時に枠サイズ ÷ grid 幅で決まる。Path の `floor(x)` + `ceil(width + 0.5)` で隣接セル間に隙間が出ないようにする (アンチエイリアス対策)。
 

@@ -1,15 +1,28 @@
 import SwiftUI
 
-/// 鳴き声バブル。Emotion.peepText が nil なら何も表示しない (focused / sulking は静か)。
+/// 鳴き声バブル。
 ///
-/// 表示中 1.5 秒、非表示 1.5 秒を繰り返す。Emotion 切替時は再度フラッシュ。
+/// 表示テキストは:
+/// - `emotion.isThoughtBubble` (= thinking) なら universal な 💭 思考バブル (常時表示)
+/// - それ以外は `model.cry(for:)` の creature 固有の鳴き声 (1.5 秒間隔フラッシュ)
+/// - `cry` が `nil` (focused / sulking) なら何も表示しない
+///
+/// Emotion 切替時は再度フラッシュ。
 struct PeepBubbleView: View {
+    let model: MascotModel
     let emotion: Emotion
+
     @State private var visible: Bool = false
+
+    /// 💭 は creature 非依存なので Emotion 側、鳴き声は creature 固有なので model 側から引く。
+    private var bubbleText: String? {
+        if emotion.isThoughtBubble { return "💭" }
+        return model.cry(for: emotion)
+    }
 
     var body: some View {
         Group {
-            if let text = emotion.peepText {
+            if let text = bubbleText {
                 Text(text)
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(Color.black.opacity(0.85))
@@ -32,16 +45,16 @@ struct PeepBubbleView: View {
             }
         }
         .onAppear {
-            visible = (emotion.peepText != nil)
+            visible = (bubbleText != nil)
         }
         .onChange(of: emotion) { _, _ in
             // 表情が変わった瞬間に「鳴く」と目立つ (SPEC §5)
-            visible = (emotion.peepText != nil)
+            visible = (bubbleText != nil)
         }
         .onReceive(Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()) { _ in
             if emotion.isThoughtBubble {
                 visible = true        // 思考バブルは点滅させずずっと表示
-            } else if emotion.peepText != nil {
+            } else if bubbleText != nil {
                 visible.toggle()      // 鳴き声は 1.5 秒間隔フラッシュ
             } else {
                 visible = false

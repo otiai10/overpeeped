@@ -15,14 +15,14 @@ if [ ! -f "$INDEX_FILE" ]; then
   exit 0
 fi
 
-CHICK_UUID=$(jq -r --arg sid "$SESSION_ID" '.[$sid] // empty' "$INDEX_FILE" 2>/dev/null || true)
-if [ -z "$CHICK_UUID" ]; then
+MASCOT_UUID=$(jq -r --arg sid "$SESSION_ID" '.[$sid] // empty' "$INDEX_FILE" 2>/dev/null || true)
+if [ -z "$MASCOT_UUID" ]; then
   echo "ぴよ? 元から見守っていません。"
   exit 0
 fi
 
 # session ファイル削除
-rm -f "$SESSIONS_DIR/${CHICK_UUID}.json"
+rm -f "$SESSIONS_DIR/${MASCOT_UUID}.json"
 
 # index から削除 (atomic)
 TMP=$(mktemp)

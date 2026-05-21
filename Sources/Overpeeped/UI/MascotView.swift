@@ -1,19 +1,26 @@
 import SwiftUI
 
-/// 1 セッションのヒナを描画する (Phase 4):
+/// 1 セッションのマスコットを描画する:
 /// - 上端: PeepBubbleView (鳴き声バブル、1.5 秒間隔フラッシュ)
-/// - 中央: AnimatedChickView (Emotion ごとのドット絵フレームアニメ)
+/// - 中央: AnimatedMascotView (Emotion ごとのドット絵フレームアニメ)
 /// - 下端: ラベル (nickname または project_name)
 ///
-/// クリック検出は ChickWindow 側 (5px 閾値で drag/click 区別)。ここはイベントを持たない。
+/// 表示する creature 種は `session.mascotModel` から `MascotRegistry` で解決する
+/// (未指定 / 未知 ID は既定の chick)。
+///
+/// クリック検出は MascotWindow 側 (5px 閾値で drag/click 区別)。ここはイベントを持たない。
 ///
 /// `isOrphan = true` のときは terminal が消えている状態。
 /// terminal app 再起動 / pane close 等ではグレースケール + 半透明で「迷子」感を出す。
-struct ChickView: View {
+struct MascotView: View {
     let session: SessionState
     var isOrphan: Bool = false
 
     @State private var now: Date = Date()
+
+    private var model: MascotModel {
+        MascotRegistry.model(id: session.mascotModel)
+    }
 
     private var emotion: Emotion {
         EmotionEngine.emotion(for: session, now: now)
@@ -36,8 +43,8 @@ struct ChickView: View {
 
     var body: some View {
         ZStack {
-            // 中央: ヒナ本体 (上下にラベル/バブルの余白を残す)
-            AnimatedChickView(emotion: emotion)
+            // 中央: マスコット本体 (上下にラベル/バブルの余白を残す)
+            AnimatedMascotView(model: model, emotion: emotion)
                 .frame(width: 96, height: 96)
                 .transition(.opacity)
                 .id(emotion)
@@ -45,7 +52,7 @@ struct ChickView: View {
             // 左上: 鳴き声バブル (= 漫画のセリフが頭の上から左に出る感じ)
             VStack(spacing: 0) {
                 HStack(spacing: 0) {
-                    PeepBubbleView(emotion: emotion)
+                    PeepBubbleView(model: model, emotion: emotion)
                     Spacer(minLength: 0)
                 }
                 Spacer(minLength: 0)

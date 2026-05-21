@@ -26,10 +26,13 @@ CLAUDE_SESSION_ID='${CLAUDE_SESSION_ID}' bash '${CLAUDE_SKILL_DIR}/scripts/peep.
 
 | 引数 | 動作 |
 |---|---|
-| (なし) | 現在のセッションを overpeeped に登録 (ヒナが孵る) |
-| `<name>` | ヒナを孵すと同時に名前をつける (予約語 `status` / `stop` / `nickname` は除く) |
+| (なし) | 現在のセッションを overpeeped に登録 (マスコットが出現) |
+| `<name>` | 登録と同時に名前をつける (予約語 `status` / `stop` / `nickname` は除く) |
+| `--model <id>` | マスコット種を指定して登録 (`<name>` と併用可)。例: `/peep mike --model lizard` |
 | `status` | 登録状態と経過時間を表示 |
-| `stop` | このセッションの監視を終了 (ヒナが消える) |
-| `nickname <name>` | 既存のヒナを命名/改名する |
+| `stop` | このセッションの監視を終了 (マスコットが消える) |
+| `nickname <name>` | 既存のマスコットを命名/改名する |
+
+`--model` に指定できる種: `chick` (既定) / `lizard`。未知の値は既定の chick として表示される。
 
 dispatcher (`peep.sh`) が `$ARGUMENTS` を見て該当のスクリプトに振り分けます。Claude 側でサブコマンドの解釈や条件分岐は不要です。
