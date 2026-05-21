@@ -2,9 +2,9 @@ import AppKit
 import Combine
 import SwiftUI
 
-// Phase 3: 複数 chick 対応。
+// Phase 3: 複数マスコット対応。
 // SessionStore が ~/.overpeeped/sessions/*.json を監視し、
-// ChickWindowManager が chick_uuid 単位で NSWindow ライフサイクルを管理する。
+// MascotWindowManager が mascot_uuid 単位で NSWindow ライフサイクルを管理する。
 
 @main
 enum OverpeepedMain {
@@ -20,7 +20,7 @@ enum OverpeepedMain {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let store = SessionStore()
-    private let manager = ChickWindowManager(positionStore: PositionStore())
+    private let manager = MascotWindowManager(positionStore: PositionStore())
     private var menuBar: MenuBarController?
     private var cancellable: AnyCancellable?
 

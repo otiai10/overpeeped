@@ -70,7 +70,7 @@
 │  Claude Code が peep skill を実行                        │
 │       ↓                                                  │
 │  1. AppleScript で Ghostty terminal UUID を取得         │
-│  2. ~/.overpeeped/sessions/<chick_uuid>.json を作成      │
+│  2. ~/.overpeeped/sessions/<mascot_uuid>.json を作成     │
 │  3. ~/.overpeeped/index.json に session_id を登録       │
 │       ↓                                                  │
 │  以降、共通の Hooks (登録済みセッションのみ) で状態更新   │
@@ -82,7 +82,7 @@
 └──────────────────────────────────────────────────────────┘
                      │ JSON ファイル更新
                      ▼
-        ~/.overpeeped/sessions/<chick_uuid>.json
+        ~/.overpeeped/sessions/<mascot_uuid>.json
                      │ ファイル監視 (DispatchSource)
                      ▼
 ┌──────────────────────────────────────────────────────────┐
@@ -90,8 +90,9 @@
 │                                                          │
 │  ├ FileWatcher          (DispatchSource で inode 監視)   │
 │  ├ SessionStore         (状態を ObservableObject で公開) │
-│  ├ ChickWindowManager   (chick ごとに NSWindow 生成)     │
-│  ├ ChickView            (SwiftUI: ヒナ描画 + アニメ)      │
+│  ├ MascotWindowManager  (マスコットごとに NSWindow 生成) │
+│  ├ MascotView           (SwiftUI: マスコット描画 + アニメ)│
+│  ├ MascotModel          (creature 種ごとの見た目/鳴き声) │
 │  ├ PeepBubbleView       (鳴き声の吹き出し)               │
 │  ├ EmotionEngine        (状態+経過時間 → 感情)           │
 │  ├ GhosttyAdapter       (AppleScript ラッパー)           │
@@ -116,20 +117,27 @@
 ```
 ~/.overpeeped/
   ├ sessions/
-  │   └ <chick_uuid>.json     # 登録済みセッションごとに 1 ファイル
-  ├ index.json                 # session_id → chick_uuid の逆引きインデックス (Hooks 用)
-  ├ positions.json             # 各 chick のウィンドウ位置永続化
+  │   └ <mascot_uuid>.json    # 登録済みセッションごとに 1 ファイル
+  ├ index.json                 # session_id → mascot_uuid の逆引きインデックス (Hooks 用)
+  ├ positions.json             # 各マスコットのウィンドウ位置永続化
   └ config.json                # ユーザー設定 (将来拡張)
 ```
 
-### sessions/<chick_uuid>.json のスキーマ
+### sessions/<mascot_uuid>.json のスキーマ
 ```json
 {
-  "chick_uuid": "550e8400-e29b-41d4-a716-446655440000",
-  "session_id": "claude-sess-abc123",
-  "ghostty_terminal_uuid": "ghostty-term-xyz789",
+  "mascot_uuid": "550e8400-e29b-41d4-a716-446655440000",
+  "agent": {
+    "kind": "claude_code",
+    "session_id": "claude-sess-abc123"
+  },
+  "terminal": {
+    "kind": "ghostty",
+    "id": "ghostty-term-xyz789"
+  },
   "project_name": "triax-hub",
   "nickname": null,
+  "mascot_model": "chick",
   "cwd": "/Users/hiromu/src/triax/hub",
   "state": "working",
   "started_at": "2026-05-06T10:30:00Z",
@@ -138,8 +146,13 @@
 }
 ```
 
+- `mascot_model`: マスコット種 (`"chick"` / `"lizard"` / …)。`/peep --model <id>` で指定する。
+  省略 (`null`) / 未知の値は Swift 側で既定の `chick` にフォールバックする。
+- 旧スキーマ (`chick_uuid` + flat な `session_id` / `ghostty_terminal_uuid`) も
+  `SessionState` の backward-compat デコードで引き続き読める。
+
 ### index.json のスキーマ
-Hooks が `session_id` から `chick_uuid` を引くための逆引きテーブル。skill が登録時に追加・削除する。
+Hooks が `session_id` から `mascot_uuid` を引くための逆引きテーブル。skill が登録時に追加・削除する。
 
 ```json
 {
@@ -239,7 +252,7 @@ enum Emotion: String, CaseIterable {
 ### ヒナの位置
 - 初回出現時: 画面右下から縦に積む (Y方向に 150px 間隔)
 - ユーザーがドラッグ移動した位置は `~/.overpeeped/positions.json` に永続化
-- `positions.json` のキーは `chick_uuid`
+- `positions.json` のキーは `mascot_uuid`
 
 ### ホバー時のツールチップ
 ヒナの上にマウスを乗せると吹き出し風にプロジェクト名と経過時間を表示:
@@ -251,8 +264,8 @@ nickname があれば表示する。
 
 ### メニューバーアイコン
 NSStatusItem に `🐥` 絵文字 (またはアプリ独自アイコン)。クリックでメニュー表示:
-- 全 chick の一覧 (絵文字でサマリー: `🥺×2 😡×1`)
-- 各 chick 項目: `{nickname または project_name} - {状態}` → クリックで Ghostty フォーカス
+- 全マスコットの一覧 (絵文字でサマリー: `🥺×2 😡×1`)
+- 各マスコット項目: `{nickname または project_name} - {状態}` → クリックで Ghostty フォーカス
 - ---
 - 「すべて隠す / すべて表示」
 - 「設定...」(将来拡張)
@@ -284,15 +297,16 @@ Sources/Overpeeped/Resources/skill/peep/
 ### サブコマンド
 | コマンド | 動作 |
 |---|---|
-| `/peep` | 現在のセッションを overpeeped に登録 (chick が出現) |
+| `/peep` | 現在のセッションを overpeeped に登録 (マスコットが出現) |
+| `/peep <name> [--model <id>]` | 登録と同時に名前 / マスコット種を指定 |
 | `/peep status` | 登録済みなら現在の状態と経過時間を表示。未登録なら未登録と表示 |
-| `/peep stop` | このセッションの監視を終了 (chick が消える) |
-| `/peep nickname <name>` | chick に名前を付ける |
+| `/peep stop` | このセッションの監視を終了 (マスコットが消える) |
+| `/peep nickname <name>` | マスコットに名前を付ける |
 
 ### `/peep` の処理フロー
 SKILL.md は Claude Code に対して以下を bash で実行するよう指示する。
 
-1. **既に登録済みかチェック**: `~/.overpeeped/index.json` の `session_id` を見る。存在すれば「既に見守り中です」と返してその chick の情報を表示
+1. **既に登録済みかチェック**: `~/.overpeeped/index.json` の `session_id` を見る。存在すれば「既に見守り中です」と返してそのマスコットの情報を表示
 2. **Ghostty terminal UUID 取得**:
    ```bash
    GHOSTTY_TERM_UUID=$(osascript -e '
@@ -301,9 +315,9 @@ SKILL.md は Claude Code に対して以下を bash で実行するよう指示�
    end tell')
    ```
    失敗したら明確なエラーメッセージ (Ghostty が起動していない / Automation 許可が無い / 1.3.0 未満など)
-3. **chick_uuid 生成**: `CHICK_UUID=$(uuidgen)`
-4. **JSON 作成**: `~/.overpeeped/sessions/${CHICK_UUID}.json` を atomic に書き込み (tmp + mv)
-5. **インデックス更新**: `index.json` に `session_id → chick_uuid` を追加 (これも atomic)
+3. **mascot_uuid 生成**: `MASCOT_UUID=$(uuidgen)`
+4. **JSON 作成**: `~/.overpeeped/sessions/${MASCOT_UUID}.json` を atomic に書き込み (tmp + mv)。`--model` 指定時は `mascot_model` フィールドに格納
+5. **インデックス更新**: `index.json` に `session_id → mascot_uuid` を追加 (これも atomic)
 6. **ユーザーへの応答**: 「ぴよっ! 🐥 (project_name) のヒナが孵りました」と返す
 
 skill が受け取る情報:
@@ -312,13 +326,13 @@ skill が受け取る情報:
 - session_id は skill 実行時の環境変数または引数経由で取得 (Claude Code skill 仕様に従う)
 
 ### `/peep stop` の処理フロー
-1. `index.json` から `session_id` で `chick_uuid` を引く
-2. `sessions/${chick_uuid}.json` と `index.json` の該当エントリを削除
+1. `index.json` から `session_id` で `mascot_uuid` を引く
+2. `sessions/${mascot_uuid}.json` と `index.json` の該当エントリを削除
 3. 「ぴよ... また呼んでね」と返す
 
 ### `/peep nickname <name>` の処理フロー
 1. 登録済みかチェック (未登録ならエラー)
-2. `sessions/${chick_uuid}.json` の `nickname` フィールドを更新
+2. `sessions/${mascot_uuid}.json` の `nickname` フィールドを更新
 3. 「ピー助 になりました 🐥」と返す
 
 ### atomic 更新のパターン
@@ -445,20 +459,24 @@ overpeeped/
 │     ├ App.swift                    # @main, NSApplicationDelegate
 │     ├ Models/
 │     │  ├ SessionState.swift        # JSON スキーマ対応の Codable struct
-│     │  └ Emotion.swift             # Emotion enum + transition logic + peepText
+│     │  └ Emotion.swift             # Emotion enum (creature 非依存の「意味」)
 │     ├ Engine/
 │     │  ├ EmotionEngine.swift       # state + elapsed → Emotion
 │     │  ├ FileWatcher.swift         # DispatchSource ラッパー
 │     │  └ SessionStore.swift        # ObservableObject, sessions の真実の源
 │     ├ Adapters/
 │     │  └ GhosttyAdapter.swift      # AppleScript focus by UUID
+│     ├ Mascots/
+│     │  ├ MascotModel.swift         # protocol + MascotRegistry (差し替え可能な creature 種)
+│     │  ├ ChickModel.swift          # 既定マスコット種 — ひよこ
+│     │  └ LizardModel.swift         # マスコット種 — とかげ
 │     ├ UI/
-│     │  ├ ChickWindow.swift         # NSWindow サブクラス (1ヒナ = 1ウィンドウ)
-│     │  ├ ChickWindowManager.swift  # セッション数に応じてウィンドウ生成・破棄
-│     │  ├ ChickView.swift           # SwiftUI: ヒナ描画 + アニメ
+│     │  ├ MascotWindow.swift        # NSWindow サブクラス (1マスコット = 1ウィンドウ)
+│     │  ├ MascotWindowManager.swift # セッション数に応じてウィンドウ生成・破棄
+│     │  ├ MascotView.swift          # SwiftUI: マスコット描画 + アニメ
+│     │  ├ AnimatedMascotView.swift  # Emotion → フレームアニメ
 │     │  ├ PeepBubbleView.swift      # 鳴き声の吹き出し
-│     │  ├ MenuBarController.swift   # NSStatusItem
-│     │  └ TooltipView.swift         # ホバー時の詳細表示
+│     │  └ MenuBarController.swift   # NSStatusItem
 │     ├ Persistence/
 │     │  └ PositionStore.swift       # positions.json の読み書き
 │     └ Resources/
@@ -699,14 +717,19 @@ Claude Code が実装中に判断が必要になったら、以下のデフォ�
 | 用語 | 意味 | 使う場所 |
 |---|---|---|
 | **overpeeped** | プロジェクト名・アプリ名 | アプリ全体、リポジトリ名 |
-| **chick (ヒナ)** | マスコット 1体。1 登録セッション = 1 chick | ファイル名 (`ChickWindow`, `ChickView` 等)、UI 文言 |
-| **peep** | (1) ヒナの鳴き声 / (2) skill 名 (`/peep`) | `peepText`, `PeepBubbleView`, `peep skill` |
-| **chick_uuid** | 各 chick の一意 ID。`/peep` 実行時に発行 | 状態ファイルの主キー |
-| **session** | Claude Code セッション。chick とは 1:1 対応 | データモデル、`SessionState`, `SessionStore` |
+| **mascot (マスコット)** | 画面上のキャラ枠。1 登録セッション = 1 mascot | ファイル名 (`MascotWindow`, `MascotView` 等)、UI 文言 |
+| **mascot_model** | マスコットの種 (`chick` / `lizard` / …)。差し替え可能 | `MascotModel` protocol、状態ファイルの `mascot_model` |
+| **chick (ヒナ)** | 既定の mascot_model。黄色いひよこ | `ChickModel`、UI 文言 (「ヒナ」) |
+| **peep** | (1) ヒナの鳴き声 / (2) skill 名 (`/peep`) | `PeepBubbleView`, `peep skill` |
+| **mascot_uuid** | 各マスコットの一意 ID。`/peep` 実行時に発行 | 状態ファイルの主キー |
+| **session** | Claude Code セッション。mascot とは 1:1 対応 | データモデル、`SessionState`, `SessionStore` |
 | **登録 (register)** | `/peep` でセッションを overpeeped に紐付ける行為 | skill, ドキュメント |
 | **ghostty_terminal_uuid** | Ghostty AppleScript が返す terminal の id | 状態ファイル、`GhosttyAdapter` |
 
-「ペット」「マスコット」「キャラクター」といった一般語は **chick** に統一する。コード上のクラス名・変数名も `Pet*` ではなく `Chick*` を使う。
+「ペット」「キャラクター」といった一般語は **mascot** に統一する。コード上のクラス名・変数名も
+`Pet*` / `Chick*` ではなく `Mascot*` を使う (`Chick*` は具体種 `ChickModel` 系のみ)。
+`Emotion` に対する見た目・鳴き声・テンポは `MascotModel` 実装が持ち、creature 種は
+session JSON の `mascot_model` で選ぶ (未指定 / 未知 ID は既定の `chick` にフォールバック)。
 
 ---
 

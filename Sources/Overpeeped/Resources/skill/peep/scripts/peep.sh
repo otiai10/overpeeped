@@ -10,8 +10,9 @@ SUBCMD="${1:-}"
 shift || true
 
 case "$SUBCMD" in
-  "")
-    exec bash "$SCRIPT_DIR/register.sh"
+  ""|--model|--model=*)
+    # 引数なし、または先頭が --model … (nickname 無しで種だけ指定)
+    exec bash "$SCRIPT_DIR/register.sh" "$SUBCMD" "$@"
     ;;
   status)
     exec bash "$SCRIPT_DIR/status.sh"
@@ -23,8 +24,9 @@ case "$SUBCMD" in
     exec bash "$SCRIPT_DIR/nickname.sh" "$@"
     ;;
   *)
-    # それ以外の文字列は nickname つきの新規登録として扱う
+    # それ以外の文字列は nickname つきの新規登録として扱う。
+    # 残りの引数 ("$@") はそのまま渡す (--model <id> 等)。
     # (予約語 status/stop/nickname は上で吸い取り済み)
-    exec bash "$SCRIPT_DIR/register.sh" "$SUBCMD"
+    exec bash "$SCRIPT_DIR/register.sh" "$SUBCMD" "$@"
     ;;
 esac

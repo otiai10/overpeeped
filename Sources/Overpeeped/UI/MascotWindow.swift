@@ -8,7 +8,7 @@ import AppKit
 ///
 /// NSWindow.performDrag(with:) は modal: 呼び出すとマウスを離すまでブロックする。
 /// そのため performDrag が return した直後を「ドラッグ完了」として扱う。
-final class ChickWindow: NSWindow {
+final class MascotWindow: NSWindow {
     var onClick: (() -> Void)?
     var onDragEnd: ((NSPoint) -> Void)?
 

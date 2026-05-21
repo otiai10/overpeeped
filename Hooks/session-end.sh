@@ -7,9 +7,9 @@ SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty' 2>/dev/null)
 INDEX_FILE="$HOME/.overpeeped/index.json"
 
 if [ -n "$SESSION_ID" ] && [ -f "$INDEX_FILE" ]; then
-  CHICK_UUID=$(jq -r --arg sid "$SESSION_ID" '.[$sid] // empty' "$INDEX_FILE" 2>/dev/null)
-  if [ -n "$CHICK_UUID" ]; then
-    rm -f "$HOME/.overpeeped/sessions/${CHICK_UUID}.json"
+  MASCOT_UUID=$(jq -r --arg sid "$SESSION_ID" '.[$sid] // empty' "$INDEX_FILE" 2>/dev/null)
+  if [ -n "$MASCOT_UUID" ]; then
+    rm -f "$HOME/.overpeeped/sessions/${MASCOT_UUID}.json"
     TMP=$(mktemp)
     if jq --arg sid "$SESSION_ID" 'del(.[$sid])' "$INDEX_FILE" > "$TMP" 2>/dev/null; then
       mv "$TMP" "$INDEX_FILE" 2>/dev/null || rm -f "$TMP"

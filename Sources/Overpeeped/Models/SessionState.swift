@@ -22,23 +22,26 @@ struct TerminalRef: Codable, Equatable {
     }
 }
 
-/// `~/.overpeeped/sessions/<chick_uuid>.json` のスキーマに対応する Codable 型。
+/// `~/.overpeeped/sessions/<mascot_uuid>.json` のスキーマに対応する Codable 型。
 ///
 /// peep skill / Hooks がこのファイルを書き、Swift 側 (FileWatcher → SessionStore) が読む。
 /// Swift は書き込み側ではないので custom encode は持たない。
 struct SessionState: Codable, Equatable, Identifiable {
-    let chickUuid: String
+    let mascotUuid: String
     let agent: AgentSessionRef
     let terminal: TerminalRef
     let projectName: String
     var nickname: String?
+    /// マスコット種 ID (`"chick"` / `"lizard"` / …)。`MascotRegistry` で解決する。
+    /// 未指定 (`nil`) / 未知 ID は既定の chick にフォールバックする。
+    let mascotModel: String?
     let cwd: String
     let state: State
     let startedAt: Date
     let lastActivityAt: Date
     let lastStateChangeAt: Date
 
-    var id: String { chickUuid }
+    var id: String { mascotUuid }
     var sessionId: String { agent.sessionId }
 
     enum State: String, Codable, CaseIterable {
@@ -80,16 +83,16 @@ extension SessionState {
 }
 
 extension SessionState {
-    /// 旧スキーマ (flat な session_id / ghostty_terminal_uuid) で書かれた on-disk file との
-    /// backward compat 用キー。新スキーマには対応する stored property が無いので
-    /// synthesized CodingKeys には混ぜず、ここでだけ参照する。
+    /// 旧スキーマで書かれた on-disk file との backward compat 用キー。
+    /// - `session_id` / `ghostty_terminal_uuid`: flat な旧 agent/terminal 表現
+    /// - `chick_uuid`: `mascot_uuid` の旧名 (マスコット pluggable 化前)
     private enum LegacyKeys: String, CodingKey {
         case sessionId
         case ghosttyTerminalUuid
+        case chickUuid
     }
 
-    /// 旧スキーマの on-disk file を読み込めるよう、agent / terminal が無ければ
-    /// flat な session_id / ghostty_terminal_uuid から組み立てる。
+    /// 旧スキーマの on-disk file を読み込めるよう、新キーが無ければ旧キーから組み立てる。
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
 
@@ -109,11 +112,19 @@ extension SessionState {
             terminal = .ghostty(id: try legacy.decode(String.self, forKey: .ghosttyTerminalUuid))
         }
 
-        self.chickUuid          = try c.decode(String.self, forKey: .chickUuid)
+        // mascot_uuid: 新キー優先、無ければ旧 chick_uuid
+        if let mascotUuid = try c.decodeIfPresent(String.self, forKey: .mascotUuid) {
+            self.mascotUuid = mascotUuid
+        } else {
+            let legacy = try decoder.container(keyedBy: LegacyKeys.self)
+            self.mascotUuid = try legacy.decode(String.self, forKey: .chickUuid)
+        }
+
         self.agent              = agent
         self.terminal           = terminal
         self.projectName        = try c.decode(String.self, forKey: .projectName)
         self.nickname           = try c.decodeIfPresent(String.self, forKey: .nickname)
+        self.mascotModel        = try c.decodeIfPresent(String.self, forKey: .mascotModel)
         self.cwd                = try c.decode(String.self, forKey: .cwd)
         self.state              = try c.decode(State.self, forKey: .state)
         self.startedAt          = try c.decode(Date.self, forKey: .startedAt)

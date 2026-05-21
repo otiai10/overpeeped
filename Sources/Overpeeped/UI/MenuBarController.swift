@@ -20,10 +20,10 @@ import Combine
 final class MenuBarController: NSObject {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let menu = NSMenu()
-    private weak var manager: ChickWindowManager?
+    private weak var manager: MascotWindowManager?
     private var cancellable: AnyCancellable?
 
-    init(store: SessionStore, manager: ChickWindowManager) {
+    init(store: SessionStore, manager: MascotWindowManager) {
         self.manager = manager
         super.init()
 
@@ -49,7 +49,7 @@ final class MenuBarController: NSObject {
         lastSessions = sessions
         menu.removeAllItems()
 
-        // ─── header: chick 数 + 感情サマリ
+        // ─── header: マスコット数 + 感情サマリ
         let header = NSMenuItem(
             title: headerText(sessions: sessions),
             action: nil,
@@ -59,14 +59,14 @@ final class MenuBarController: NSObject {
         menu.addItem(header)
         menu.addItem(.separator())
 
-        // ─── 各 chick
+        // ─── 各マスコット
         if sessions.isEmpty {
             let empty = NSMenuItem(title: "ヒナはまだいません  (\(AgentAdapters.defaultAdapter.emptyStateHint))", action: nil, keyEquivalent: "")
             empty.isEnabled = false
             menu.addItem(empty)
         } else {
             for s in sessions {
-                menu.addItem(chickMenuItem(for: s))
+                menu.addItem(mascotMenuItem(for: s))
             }
         }
 
@@ -105,7 +105,7 @@ final class MenuBarController: NSObject {
         return "🐥×\(sessions.count)   \(summary)"
     }
 
-    private func chickMenuItem(for session: SessionState) -> NSMenuItem {
+    private func mascotMenuItem(for session: SessionState) -> NSMenuItem {
         let label: String = {
             if let n = session.nickname, !n.isEmpty { return "\(n) (\(session.projectName))" }
             return session.projectName
@@ -114,7 +114,7 @@ final class MenuBarController: NSObject {
         let stateLabel = "\(EmotionEngine.emotion(for: session).emojiFallback) \(session.state.rawValue) (\(elapsed)s)"
         let title = "\(label)    \(stateLabel)"
 
-        let item = NSMenuItem(title: title, action: #selector(chickClicked(_:)), keyEquivalent: "")
+        let item = NSMenuItem(title: title, action: #selector(mascotClicked(_:)), keyEquivalent: "")
         item.target = self
         item.representedObject = session.terminal
         return item
@@ -122,7 +122,7 @@ final class MenuBarController: NSObject {
 
     // MARK: - Actions
 
-    @objc private func chickClicked(_ sender: NSMenuItem) {
+    @objc private func mascotClicked(_ sender: NSMenuItem) {
         guard let terminal = sender.representedObject as? TerminalRef else { return }
         Log.click.info("via menubar terminal=\(terminal.id.shortLogId) kind=\(terminal.kind)")
         TerminalAdapters.focus(terminal)

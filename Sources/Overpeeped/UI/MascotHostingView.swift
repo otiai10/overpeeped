@@ -5,7 +5,7 @@ import SwiftUI
 ///
 /// `addCursorRect` 方式なので mouseEntered/Exited を手動で扱う必要がなく、
 /// OS が rect の入退出に応じて勝手にカーソルを管理してくれる。
-final class ChickHostingView<Content: View>: NSHostingView<Content> {
+final class MascotHostingView<Content: View>: NSHostingView<Content> {
     override func resetCursorRects() {
         super.resetCursorRects()
         addCursorRect(bounds, cursor: .pointingHand)

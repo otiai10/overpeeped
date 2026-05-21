@@ -15,13 +15,13 @@ if [ ! -f "$INDEX_FILE" ]; then
   exit 0
 fi
 
-CHICK_UUID=$(jq -r --arg sid "$SESSION_ID" '.[$sid] // empty' "$INDEX_FILE" 2>/dev/null || true)
-if [ -z "$CHICK_UUID" ]; then
+MASCOT_UUID=$(jq -r --arg sid "$SESSION_ID" '.[$sid] // empty' "$INDEX_FILE" 2>/dev/null || true)
+if [ -z "$MASCOT_UUID" ]; then
   echo "未登録のセッションです。/peep で見守りを開始してください。"
   exit 0
 fi
 
-SESSION_FILE="$SESSIONS_DIR/${CHICK_UUID}.json"
+SESSION_FILE="$SESSIONS_DIR/${MASCOT_UUID}.json"
 if [ ! -f "$SESSION_FILE" ]; then
   echo "Warning: index には登録されていますが state ファイルが見つかりません ($SESSION_FILE)。" >&2
   exit 1

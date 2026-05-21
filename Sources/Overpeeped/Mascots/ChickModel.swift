@@ -1,6 +1,8 @@
 import SwiftUI
 
-/// ヒナのドット絵スプライト集。各 Emotion は 1〜3 フレーム持つ (SPEC §11 のテーブル準拠)。
+/// 既定のマスコット種 — ひよこ (chick)。
+///
+/// ドット絵スプライト集。各 `Emotion` は 1〜3 フレーム持つ (SPEC §11 のテーブル準拠)。
 ///
 /// - グリッドサイズ: **16×16**
 /// - 凡例:
@@ -11,8 +13,42 @@ import SwiftUI
 ///   - `p` ピンク (頬)、`r` 赤頬 (怒り)、`b` 青ざめ (悲)、`t` 涙、`s` キラキラ
 ///   - `g` 茶 (拗ねた後ろ姿)、`G` 濃茶
 ///   - `k` 黒色アウトライン
-enum ChickSprites {
-    static let palette: [Character: Color] = [
+struct ChickModel: MascotModel {
+    let id = "chick"
+    let displayName = "ひよこ"
+
+    func frames(for emotion: Emotion) -> [PixelArt] {
+        switch emotion {
+        case .thinking:  return Self.thinking
+        case .focused:   return Self.focused
+        case .expectant: return Self.expectant
+        case .impatient: return Self.impatient
+        case .angry:     return Self.angry
+        case .sad:       return Self.sad
+        case .happy:     return Self.happy
+        case .lonely:    return Self.lonely
+        case .sulking:   return Self.sulking
+        }
+    }
+
+    /// thinking は鳴き声ではなく 💭 思考バブル、focused / sulking は無音。
+    func cry(for emotion: Emotion) -> String? {
+        switch emotion {
+        case .thinking, .focused, .sulking: return nil
+        case .expectant:                    return "ぴよ?"
+        case .impatient:                    return "ぴよぴよっ"
+        case .angry:                        return "ピヨーッ!"
+        case .sad:                          return "ぴ...よ..."
+        case .happy:                        return "ぴよっ♪"
+        case .lonely:                       return "ぴよ..."
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // MARK: - Sprites
+    // ─────────────────────────────────────────────────────────────
+
+    private static let palette: [Character: Color] = [
         "y": Color(red: 1.00, green: 0.83, blue: 0.30),
         "Y": Color(red: 0.85, green: 0.65, blue: 0.18),
         "f": Color(red: 1.00, green: 0.78, blue: 0.10),  // flashy / 鮮やか黄 (expectant)
@@ -36,22 +72,14 @@ enum ChickSprites {
         "q": Color(red: 0.32, green: 0.16, blue: 0.05),  // burnt char (焼き鶏の焦げ目)
     ]
 
-    static func art(_ ascii: String) -> PixelArt {
-        let art = PixelArt(ascii, palette: palette)
-        #if DEBUG
-        // 16×16 厳守 (タイポでズレるとレイアウト崩壊)
-        assert(art.height == 16, "ChickSprites: expected 16 rows, got \(art.height)")
-        for (i, row) in art.cells.enumerated() {
-            assert(row.count == 16, "ChickSprites: row \(i) width=\(row.count) (must be 16)")
-        }
-        #endif
-        return art
+    private static func art(_ ascii: String) -> PixelArt {
+        mascotPixelArt(ascii, palette: palette)
     }
 
     // ─────────────────────────────────────────────────────────────
     // focused — 集中顔。右向き横顔で歩いている
     // ─────────────────────────────────────────────────────────────
-    static let focused: [PixelArt] = [
+    private static let focused: [PixelArt] = [
         // 右足が前
         art("""
         ................
@@ -95,7 +123,7 @@ enum ChickSprites {
     // ─────────────────────────────────────────────────────────────
     // expectant — 期待顔 (目キラキラ + 小ジャンプ)
     // ─────────────────────────────────────────────────────────────
-    static let expectant: [PixelArt] = [
+    private static let expectant: [PixelArt] = [
         art("""
         ................
         .....ffffff.....
@@ -138,7 +166,7 @@ enum ChickSprites {
     // ─────────────────────────────────────────────────────────────
     // impatient — むっとした顔 (頬ふっくら)。足踏み 3 frame
     // ─────────────────────────────────────────────────────────────
-    static let impatient: [PixelArt] = [
+    private static let impatient: [PixelArt] = [
         art("""
         ................
         .....mmmmmm.....
@@ -198,7 +226,7 @@ enum ChickSprites {
     // ─────────────────────────────────────────────────────────────
     // angry — 怒り (目が吊り上がる、頬赤、頭に羽の逆立ち)。プルプル震え
     // ─────────────────────────────────────────────────────────────
-    static let angry: [PixelArt] = [
+    private static let angry: [PixelArt] = [
         art("""
         ................
         ......k..k......
@@ -238,11 +266,10 @@ enum ChickSprites {
     ]
 
     // ─────────────────────────────────────────────────────────────
-    // sad — 悲しみ (うつむき・涙)
-    // ─────────────────────────────────────────────────────────────
     // sad — 「放置されすぎて grill された末路」🔥🍗
     // 典型的な丸焼きチキン (🍗 emoji 風): 右肩から骨 1 本 (短く) + ぷっくり楕円の焼き本体
-    static let sad: [PixelArt] = [
+    // ─────────────────────────────────────────────────────────────
+    private static let sad: [PixelArt] = [
         art("""
         ................
         ................
@@ -285,7 +312,7 @@ enum ChickSprites {
     // ─────────────────────────────────────────────────────────────
     // happy — 笑顔 + ✨ 周囲。ぴょんぴょん 3 frame
     // ─────────────────────────────────────────────────────────────
-    static let happy: [PixelArt] = [
+    private static let happy: [PixelArt] = [
         art("""
         s..............s
         ................
@@ -347,7 +374,7 @@ enum ChickSprites {
     // ─────────────────────────────────────────────────────────────
     // lonely — 寂しい、じっとこちらを見上げる
     // ─────────────────────────────────────────────────────────────
-    static let lonely: [PixelArt] = [
+    private static let lonely: [PixelArt] = [
         art("""
         ................
         ................
@@ -371,7 +398,7 @@ enum ChickSprites {
     // ─────────────────────────────────────────────────────────────
     // sulking — 拗ね (後ろ向き、トサカだけ見える)
     // ─────────────────────────────────────────────────────────────
-    static let sulking: [PixelArt] = [
+    private static let sulking: [PixelArt] = [
         art("""
         ................
         ......g.g.......
@@ -394,38 +421,7 @@ enum ChickSprites {
 
     // ─────────────────────────────────────────────────────────────
     // thinking — ツール選定中。chick 本体は focused (右向き歩行) を流用し、
-    // 「考え中」表現は ChickView の balloon (💭) に集約する。
-    // frameDuration は 800ms にしてゆっくり歩かせる (working 320ms とのコントラスト)。
+    // 「考え中」表現は PeepBubbleView の 💭 に集約する。
     // ─────────────────────────────────────────────────────────────
-    static let thinking: [PixelArt] = focused
-
-    // MARK: - Lookup
-    static func frames(for emotion: Emotion) -> [PixelArt] {
-        switch emotion {
-        case .thinking:  return thinking
-        case .focused:   return focused
-        case .expectant: return expectant
-        case .impatient: return impatient
-        case .angry:     return angry
-        case .sad:       return sad
-        case .happy:     return happy
-        case .lonely:    return lonely
-        case .sulking:   return sulking
-        }
-    }
-
-    /// SPEC §5 のフレームスピード方針: 200-500ms。表情ごとに速度変える。
-    static func frameDurationMs(for emotion: Emotion) -> Int {
-        switch emotion {
-        case .thinking:                   return 800   // 考え中: ゆったり
-        case .focused:                    return 320   // 歩行リズム
-        case .lonely, .sulking:           return 600   // ゆったり / 静止
-        case .expectant:                  return 350
-        case .impatient:                  return 200   // 足踏みパタパタ
-        case .angry:                      return 100   // プルプル震え
-        case .sad:                        return 900   // 丸焼き化したのでゆったり (ジリジリ焼ける感)
-        case .happy:                      return 200   // ぴょんぴょん
-        }
-    }
+    private static let thinking: [PixelArt] = focused
 }
-

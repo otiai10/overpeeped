@@ -9,9 +9,9 @@ INDEX_FILE="$HOME/.overpeeped/index.json"
 SESSION_FILE=""
 
 if [ -n "$SESSION_ID" ] && [ -f "$INDEX_FILE" ]; then
-  CHICK_UUID=$(jq -r --arg sid "$SESSION_ID" '.[$sid] // empty' "$INDEX_FILE" 2>/dev/null)
-  if [ -n "$CHICK_UUID" ]; then
-    CANDIDATE="$HOME/.overpeeped/sessions/${CHICK_UUID}.json"
+  MASCOT_UUID=$(jq -r --arg sid "$SESSION_ID" '.[$sid] // empty' "$INDEX_FILE" 2>/dev/null)
+  if [ -n "$MASCOT_UUID" ]; then
+    CANDIDATE="$HOME/.overpeeped/sessions/${MASCOT_UUID}.json"
     [ -f "$CANDIDATE" ] && SESSION_FILE="$CANDIDATE"
   fi
 fi
