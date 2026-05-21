@@ -283,7 +283,7 @@ NSStatusItem に `🐥` 絵文字 (またはアプリ独自アイコン)。ク�
 
 ### skill の配置
 ```
-Sources/Overpeeped/Resources/skill/peep/
+Sources/Overpeeped/Resources/skills/peep/
   ├ SKILL.md
   └ scripts/
       ├ register.sh    # /peep のメイン処理
@@ -481,7 +481,7 @@ overpeeped/
 │     │  └ PositionStore.swift       # positions.json の読み書き
 │     └ Resources/
 │        ├ sprites/                  # ドット絵 PNG (ヒナの各表情)
-│        └ skill/peep/                # /peep skill 一式
+│        └ skills/peep/               # /peep skill 一式
 │           ├ SKILL.md
 │           └ scripts/
 │              ├ register.sh
@@ -582,7 +582,7 @@ overpeeped/
 **目的**: skill 経由で登録 → JSON ファイルが正しく生成されるところまで完成させる。
 
 成果物:
-- `Sources/Overpeeped/Resources/skill/peep/SKILL.md` と `scripts/*.sh`
+- `Sources/Overpeeped/Resources/skills/peep/SKILL.md` と `scripts/*.sh`
 - `Scripts/install.sh` (skill コピー部分のみ、hooks は Phase 2)
 - `~/.overpeeped/` ディレクトリ構造の初期化
 - index.json 管理ロジック
