@@ -35,6 +35,14 @@ final class MascotWindowManager {
         allHidden ? showAll() : hideAll()
     }
 
+    /// アプリ終了時にすべてのマスコットウィンドウを閉じる (graceful stop)。
+    func shutdown() {
+        for window in windows.values { window.close() }
+        windows.removeAll()
+        sessions.removeAll()
+        orphans.removeAll()
+    }
+
     func update(sessions newSessions: [SessionState]) {
         let newDict = Dictionary(uniqueKeysWithValues: newSessions.map { ($0.mascotUuid, $0) })
 

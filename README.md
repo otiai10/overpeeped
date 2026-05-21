@@ -35,7 +35,7 @@ make install              # build + 全部入り (skill / hooks / .app / CLI lau
 | `~/.claude/skills/peep/` | `/peep` slash command |
 | `~/.claude/settings.json` | hooks エントリを **jq でマージ** (既存設定は破壊しない、自動バックアップ付き) |
 | `~/Applications/Overpeeped.app` | アプリ本体 |
-| `~/.local/bin/overpeeped` | CLI ランチャ (`open -a Overpeeped` を呼ぶ薄いラッパ) |
+| `~/.local/bin/overpeeped` | CLI ランチャ (`overpeeped` で起動 / `overpeeped --quit` で終了) |
 
 ## 起動方法
 
@@ -46,6 +46,16 @@ open -a Overpeeped      # macOS 標準
 ```
 
 起動するとメニューバー右上に🐥アイコンが常駐し、Dock には出ません (LSUIElement)。
+
+終了は ⌘Q / メニューバー / CLI のいずれからでも可:
+
+```sh
+overpeeped --quit       # CLI から graceful 終了 (-q も可)
+```
+
+どの経路でも **graceful stop** で、FileWatcher を停止しウィンドウを畳んだうえで、
+**幽霊チック** (もう動いていない Claude セッションの取り残された session ファイル — 24h 以上
+活動のないもの) を `~/.overpeeped/sessions/` と `index.json` から掃除してから終了します。
 
 > ⚠️ 初回起動時、macOS が **Automation 許可** ダイアログを出します (Ghostty への AppleScript 操作のため必須)。
 > 後から System Settings → Privacy & Security → Automation で確認/変更できます。
@@ -89,7 +99,7 @@ Claude Code セッションの中で:
 メニューバーの🐥アイコン → drop down:
 - 全 chick の一覧 (クリックで Ghostty へ飛ぶ)
 - ヒナを隠す/表示 (⌘H)
-- Overpeeped を終了 (⌘Q)
+- Overpeeped を終了 (⌘Q / `overpeeped --quit`)
 
 ## 開発
 
