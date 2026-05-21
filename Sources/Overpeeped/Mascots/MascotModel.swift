@@ -2,7 +2,7 @@ import SwiftUI
 
 /// `Emotion` を受け取って「見た目・鳴き声・テンポ」を返す、差し替え可能なマスコット種。
 ///
-/// `chick` を既定とし、`lizard` / `slime` / `dog` … を後から足せる。
+/// `chick` を既定とし、`lizard` / `slime` / `dog` / `cat` / `ghost` … を後から足せる。
 /// 各 model を `MascotRegistry` に登録し、session JSON の `mascot_model` で選択する。
 ///
 /// 設計方針:
@@ -51,7 +51,9 @@ enum MascotRegistry {
     static let defaultID = "chick"
 
     private static let models: [String: MascotModel] = {
-        let all: [MascotModel] = [ChickModel(), LizardModel()]
+        let all: [MascotModel] = [
+            ChickModel(), LizardModel(), SlimeModel(), DogModel(), CatModel(), GhostModel(),
+        ]
         return Dictionary(uniqueKeysWithValues: all.map { ($0.id, $0) })
     }()
 

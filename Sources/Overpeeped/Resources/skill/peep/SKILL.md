@@ -33,6 +33,6 @@ CLAUDE_SESSION_ID='${CLAUDE_SESSION_ID}' bash '${CLAUDE_SKILL_DIR}/scripts/peep.
 | `stop` | このセッションの監視を終了 (マスコットが消える) |
 | `nickname <name>` | 既存のマスコットを命名/改名する |
 
-`--model` に指定できる種: `chick` (既定) / `lizard`。未知の値は既定の chick として表示される。
+`--model` に指定できる種: `chick` (既定) / `lizard` / `slime` / `dog` / `cat` / `ghost`。未知の値は既定の chick として表示される。
 
 dispatcher (`peep.sh`) が `$ARGUMENTS` を見て該当のスクリプトに振り分けます。Claude 側でサブコマンドの解釈や条件分岐は不要です。
