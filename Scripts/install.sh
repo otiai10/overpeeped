@@ -114,14 +114,25 @@ echo "  copied $APP_BUNDLE_SRC → $APP_BUNDLE_DST"
 
 # ─────────────────────────────────────────────────────────────
 # 6. CLI ランチャー ~/.local/bin/overpeeped
-#    `overpeeped` でアプリを起動できるようにする (open -a 経由)
+#    `overpeeped`            → アプリ起動 (open -a 経由)
+#    `overpeeped --quit|-q`  → 起動中アプリを graceful 終了 (アプリ本体に委譲)
 # ─────────────────────────────────────────────────────────────
 echo "==> CLI launcher: $CLI_DST"
 mkdir -p "$(dirname "$CLI_DST")"
 cat > "$CLI_DST" <<'CLI'
 #!/bin/bash
-# overpeeped CLI launcher — Overpeeped.app をフォアグラウンド起動する薄いラッパ
-exec open -a Overpeeped "$@"
+# overpeeped CLI launcher
+#   overpeeped            — Overpeeped.app を起動
+#   overpeeped --quit|-q  — 起動中の Overpeeped を graceful に終了 (幽霊チックを掃除して停止)
+APP="$HOME/Applications/Overpeeped.app"
+case "${1:-}" in
+  -q|--quit)
+    exec "$APP/Contents/MacOS/Overpeeped" --quit
+    ;;
+  *)
+    exec open -a Overpeeped "$@"
+    ;;
+esac
 CLI
 chmod +x "$CLI_DST"
 
@@ -137,6 +148,7 @@ echo "✨ overpeeped installed."
 echo ""
 echo "  GUI 起動    : open -a Overpeeped     (or Spotlight で 'Overpeeped')"
 echo "  CLI 起動    : overpeeped"
+echo "  CLI 終了    : overpeeped --quit      (-q も可)"
 echo "  Claude セッション内: /peep [<名前>] / /peep status / /peep stop / /peep nickname <名前>"
 echo ""
 if [ -n "$PATH_HINT" ]; then

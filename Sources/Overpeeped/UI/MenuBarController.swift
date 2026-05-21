@@ -43,6 +43,12 @@ final class MenuBarController: NSObject {
             }
     }
 
+    /// アプリ終了時にメニューバーアイコンを取り除く (graceful stop)。
+    func shutdown() {
+        cancellable?.cancel()
+        NSStatusBar.system.removeStatusItem(statusItem)
+    }
+
     // MARK: - Menu rebuild
 
     private func rebuildMenu(sessions: [SessionState]) {

@@ -16,6 +16,7 @@ enum Log {
     static let store    = Logger(subsystem: subsystem, category: "store")
     static let watcher  = Logger(subsystem: subsystem, category: "watcher")
     static let position = Logger(subsystem: subsystem, category: "position")
+    static let sweep    = Logger(subsystem: subsystem, category: "sweep")
 }
 
 extension String {
