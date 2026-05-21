@@ -8,7 +8,7 @@ import Foundation
 ///   1. `struct Foo TerminalAdapter: TerminalAdapter { ... }` を Adapters/ 配下に追加
 ///   2. `TerminalRef.fooKind` 定数を Models/SessionState.swift に追加
 ///   3. このファイルの `TerminalAdapters.adapter(for:)` switch に case を追加
-///   4. Resources/skill/peep/scripts/detect-terminal.sh の case に対応する detector を追加
+///   4. Resources/skills/peep/scripts/detect-terminal.sh の case に対応する detector を追加
 protocol TerminalAdapter {
     func focus(id: String) -> Bool
     func allTerminalIds() -> Set<String>?

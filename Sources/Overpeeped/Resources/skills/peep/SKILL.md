@@ -2,6 +2,7 @@
 name: peep
 description: overpeeped (デスクトップマスコットアプリ) に Claude Code セッションを登録する。`/peep` でセッションをヒナ化 (`/peep <名前>` で命名しつつ登録)、`/peep status` で状態確認、`/peep stop` で監視終了、`/peep nickname <名前>` で命名/改名。並列に走る複数の Claude Code セッションを忘れずに見守りたいときに使う。
 allowed-tools: Bash
+license: MIT
 ---
 
 # /peep — overpeeped にセッションを登録する

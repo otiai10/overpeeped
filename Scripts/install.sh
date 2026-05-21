@@ -9,7 +9,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-SKILL_SRC="$REPO_DIR/Sources/Overpeeped/Resources/skill/peep"
+SKILL_SRC="$REPO_DIR/Sources/Overpeeped/Resources/skills/peep"
 HOOKS_SRC="$REPO_DIR/Hooks"
 SKILL_DST="$HOME/.claude/skills/peep"
 OVERPEEPED_DIR="$HOME/.overpeeped"
