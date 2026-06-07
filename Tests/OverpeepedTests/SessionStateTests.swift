@@ -36,6 +36,44 @@ final class SessionStateTests: XCTestCase {
         XCTAssertEqual(s.mascotModel, "lizard")
         XCTAssertEqual(s.cwd, "/Users/hiromu/src/triax/hub")
         XCTAssertEqual(s.state, .working)
+        XCTAssertNil(s.mission)   // mission キー無し → nil
+    }
+
+    /// mission キーがあれば decode され、無ければ nil (peep skill が後から書く optional フィールド)
+    func testDecodeMission() throws {
+        let withMission = """
+        {
+          "mascot_uuid": "abc",
+          "agent": { "kind": "claude_code", "session_id": "s1" },
+          "terminal": { "kind": "ghostty", "id": "g1" },
+          "project_name": "p",
+          "nickname": null,
+          "mission": "#7 のミッション機能を実装",
+          "cwd": "/",
+          "state": "working",
+          "started_at": "2026-01-01T00:00:00Z",
+          "last_activity_at": "2026-01-01T00:00:00Z",
+          "last_state_change_at": "2026-01-01T00:00:00Z"
+        }
+        """.data(using: .utf8)!
+        XCTAssertEqual(try SessionState.decode(from: withMission).mission, "#7 のミッション機能を実装")
+
+        let nullMission = """
+        {
+          "mascot_uuid": "abc",
+          "agent": { "kind": "claude_code", "session_id": "s1" },
+          "terminal": { "kind": "ghostty", "id": "g1" },
+          "project_name": "p",
+          "nickname": null,
+          "mission": null,
+          "cwd": "/",
+          "state": "working",
+          "started_at": "2026-01-01T00:00:00Z",
+          "last_activity_at": "2026-01-01T00:00:00Z",
+          "last_state_change_at": "2026-01-01T00:00:00Z"
+        }
+        """.data(using: .utf8)!
+        XCTAssertNil(try SessionState.decode(from: nullMission).mission)
     }
 
     /// mascot_model 省略時は nil (→ Swift 側で既定の chick にフォールバック)

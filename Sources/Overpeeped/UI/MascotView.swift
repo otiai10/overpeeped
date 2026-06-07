@@ -38,7 +38,11 @@ struct MascotView: View {
             return session.projectName
         }()
         let elapsed = Int(now.timeIntervalSince(session.lastStateChangeAt))
-        return "\(name)\n状態: \(session.state.rawValue) / \(elapsed)秒"
+        var lines = ["\(name)", "状態: \(session.state.rawValue) / \(elapsed)秒"]
+        if let m = session.mission, !m.isEmpty {
+            lines.insert("🎯 \(m)", at: 1)
+        }
+        return lines.joined(separator: "\n")
     }
 
     var body: some View {
@@ -60,8 +64,8 @@ struct MascotView: View {
             .padding(.top, 24)
             .padding(.leading, 0)
 
-            // 下端: 識別ラベル
-            VStack(spacing: 0) {
+            // 下端: 識別ラベル + (あれば) ミッションラベル
+            VStack(spacing: 2) {
                 Spacer()
                 Text(label)
                     .font(.system(size: 10, weight: .semibold))
@@ -74,6 +78,20 @@ struct MascotView: View {
                         Capsule().fill(Color.black.opacity(0.62))
                     )
                     .frame(maxWidth: 120)
+
+                if let mission = session.mission, !mission.isEmpty {
+                    Text("🎯 \(mission)")
+                        .font(.system(size: 8, weight: .medium))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .foregroundStyle(.white.opacity(0.95))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1.5)
+                        .background(
+                            Capsule().fill(Color.accentColor.opacity(0.72))
+                        )
+                        .frame(maxWidth: 124)
+                }
             }
             .padding(.bottom, 2)
         }

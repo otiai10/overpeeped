@@ -23,10 +23,13 @@ case "$SUBCMD" in
   nickname)
     exec bash "$SCRIPT_DIR/nickname.sh" "$@"
     ;;
+  mission)
+    exec bash "$SCRIPT_DIR/mission.sh" "$@"
+    ;;
   *)
     # それ以外の文字列は nickname つきの新規登録として扱う。
     # 残りの引数 ("$@") はそのまま渡す (--model <id> 等)。
-    # (予約語 status/stop/nickname は上で吸い取り済み)
+    # (予約語 status/stop/nickname/mission は上で吸い取り済み)
     exec bash "$SCRIPT_DIR/register.sh" "$SUBCMD" "$@"
     ;;
 esac
