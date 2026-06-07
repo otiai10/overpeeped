@@ -96,7 +96,7 @@ final class MascotWindowManager {
     private func createWindow(for session: SessionState, isOrphan: Bool) -> MascotWindow {
         let mascotUuid = session.mascotUuid
         let window = MascotWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 128, height: 128),
+            contentRect: NSRect(x: 0, y: 0, width: 128, height: 168),
             styleMask: [.borderless],
             backing: .buffered,
             defer: false
