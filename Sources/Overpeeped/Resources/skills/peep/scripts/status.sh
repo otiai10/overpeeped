@@ -52,9 +52,14 @@ if [ -n "$NICKNAME" ] && [ "$NICKNAME" != "null" ]; then
   NAME_DISPLAY="$NICKNAME ($PROJECT)"
 fi
 
+MISSION=$(jq -r '.mission // ""' "$SESSION_FILE")
+
 cat <<EOM
 🐥 $NAME_DISPLAY
   状態: $STATE
   最終遷移からの経過: $ELAPSED_HUMAN
   最終アクティビティ: $LAST_ACT
 EOM
+if [ -n "$MISSION" ] && [ "$MISSION" != "null" ]; then
+  echo "  🎯 ミッション: $MISSION"
+fi

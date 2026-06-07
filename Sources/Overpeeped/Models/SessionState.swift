@@ -32,6 +32,9 @@ struct SessionState: Codable, Equatable, Identifiable {
     let terminal: TerminalRef
     let projectName: String
     var nickname: String?
+    /// セッションの掲げるミッション (1 行要約)。peep skill 経由でセッション自身が
+    /// 会話から要約して書き込む。未設定 (`nil`) なら UI には出さない。
+    var mission: String?
     /// マスコット種 ID (`"chick"` / `"lizard"` / …)。`MascotRegistry` で解決する。
     /// 未指定 (`nil`) / 未知 ID は既定の chick にフォールバックする。
     let mascotModel: String?
@@ -124,6 +127,7 @@ extension SessionState {
         self.terminal           = terminal
         self.projectName        = try c.decode(String.self, forKey: .projectName)
         self.nickname           = try c.decodeIfPresent(String.self, forKey: .nickname)
+        self.mission            = try c.decodeIfPresent(String.self, forKey: .mission)
         self.mascotModel        = try c.decodeIfPresent(String.self, forKey: .mascotModel)
         self.cwd                = try c.decode(String.self, forKey: .cwd)
         self.state              = try c.decode(State.self, forKey: .state)

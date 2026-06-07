@@ -3,7 +3,7 @@ import SwiftUI
 /// 1 セッションのマスコットを描画する:
 /// - 上端: PeepBubbleView (鳴き声バブル、1.5 秒間隔フラッシュ)
 /// - 中央: AnimatedMascotView (Emotion ごとのドット絵フレームアニメ)
-/// - 下端: ラベル (nickname または project_name)
+/// - 下端: (あれば) ミッションの吹き出し (SpeechBubble) → 識別ラベル (nickname または project_name)
 ///
 /// 表示する creature 種は `session.mascotModel` から `MascotRegistry` で解決する
 /// (未指定 / 未知 ID は既定の chick)。
@@ -38,7 +38,11 @@ struct MascotView: View {
             return session.projectName
         }()
         let elapsed = Int(now.timeIntervalSince(session.lastStateChangeAt))
-        return "\(name)\n状態: \(session.state.rawValue) / \(elapsed)秒"
+        var lines = ["\(name)", "状態: \(session.state.rawValue) / \(elapsed)秒"]
+        if let m = session.mission, !m.isEmpty {
+            lines.insert("🎯 \(m)", at: 1)
+        }
+        return lines.joined(separator: "\n")
     }
 
     var body: some View {
@@ -60,9 +64,32 @@ struct MascotView: View {
             .padding(.top, 24)
             .padding(.leading, 0)
 
-            // 下端: 識別ラベル
-            VStack(spacing: 0) {
+            // 下端: (あれば) ミッションの吹き出し → その下に識別ラベル。
+            // 吹き出しはしっぽが上＝マスコット側を向き、「マスコットのセリフ」として読める。
+            VStack(spacing: 3) {
                 Spacer()
+
+                if let mission = session.mission, !mission.isEmpty {
+                    // 長いミッションは横に伸ばさず折り返す (枠幅に収め、最大 3 行)。
+                    Text("🎯 \(mission)")
+                        .font(.system(size: 10, weight: .semibold))
+                        .lineLimit(3)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .foregroundStyle(Color.black.opacity(0.85))
+                        // 上 padding はしっぽ高さ (7) ぶん余分に確保して本文がしっぽに被らないように
+                        .padding(EdgeInsets(top: 11, leading: 9, bottom: 5, trailing: 9))
+                        .background(
+                            SpeechBubble()
+                                .fill(Color.white.opacity(0.97))
+                                .shadow(color: .black.opacity(0.22), radius: 2.5, x: 0, y: 1)
+                        )
+                        .overlay(
+                            SpeechBubble().stroke(Color.black.opacity(0.15), lineWidth: 0.8)
+                        )
+                        .frame(maxWidth: 122)
+                }
+
                 Text(label)
                     .font(.system(size: 10, weight: .semibold))
                     .lineLimit(1)
@@ -77,7 +104,7 @@ struct MascotView: View {
             }
             .padding(.bottom, 2)
         }
-        .frame(width: 128, height: 128)
+        .frame(width: 128, height: 168)
         .saturation(isOrphan ? 0 : 1)
         .opacity(isOrphan ? 0.55 : 1)
         .help(tooltip)
