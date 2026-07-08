@@ -1,11 +1,26 @@
 #!/bin/bash
 # peep.sh — /peep slash command の dispatcher
 #
-# SKILL.md から呼ばれる。$1 をサブコマンドとみなし対応スクリプトに exec する。
-# CLAUDE_SESSION_ID は環境変数で渡される前提。
+# UserPromptExpansion hook / SKILL.md から呼ばれる。$1 をサブコマンドとみなし
+# 対応スクリプトに exec する。
+# CLAUDE_SESSION_ID は環境変数で渡すか、先頭の --session-id=<id> で指定する
+# (hook 外から model が実行するとき用。env prefix だと permission rule の
+# prefix match に載らないため option 形式を用意している)。
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+case "${1:-}" in
+  --session-id=*)
+    export CLAUDE_SESSION_ID="${1#--session-id=}"
+    shift
+    ;;
+  --session-id)
+    export CLAUDE_SESSION_ID="${2:-}"
+    shift 2 || shift
+    ;;
+esac
+
 SUBCMD="${1:-}"
 shift || true
 

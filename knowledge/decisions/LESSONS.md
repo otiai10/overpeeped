@@ -200,3 +200,38 @@ TimelineView(.periodic(from: .now, by: interval)) { context in
 
 ### SPEC §11 との解釈差: 「ドット絵」
 SPEC §11 は実 PNG ファイル (SVG → ラスタライズ) を想定。今回は SwiftUI Canvas で同じ pixel 粒度を実現したので結果は同じ。実装コスト (アセット管理 vs. コード描画) と保守性で後者を選んだ。SPEC は "想定実装"、結果が同じなら逸脱して OK という判断。
+
+## /peep の non-blocking 化 (UserPromptExpansion hook)
+
+### custom slash command は通常 model turn を消費する
+SKILL.md ベースの skill は、ユーザーが `/peep` を打つと skill 本文が context に load され
+model が実行する — つまり main conversation を 1 turn ブロックする。skill frontmatter には
+これを回避するオプションは存在しない (`disable-model-invocation` は自動発火の抑止のみ、
+`context: fork` も turn は消費する)。`/rename` / `/btw` 等の built-in local command は
+CLI にハードコードされており、拡張ポイントは無い。
+
+### UserPromptExpansion hook が「展開前の横取り」を可能にする
+Claude Code 2.1.204 で確認 (docs: https://code.claude.com/docs/en/hooks.md)。
+ユーザーが打った slash command が prompt に展開される**前**に発火する hook。
+
+- 入力 (stdin JSON): `session_id` / `expansion_type` (`slash_command` | `mcp_prompt`) /
+  `command_name` (`peep`) / `command_args` (コマンド名以降の生文字列) / `prompt` (原文)
+- settings.json の `matcher` は `command_name` にマッチする
+- 出力 `{"decision": "block", "reason": "..."}` で展開を阻止。`reason` はユーザーに表示され、
+  **model への query 自体が発生しない** (binary 上 `shouldQuery: false`)。skill は load されない
+- block 時の表示は `UserPromptExpansion operation blocked by hook: <reason>  Original prompt: <原文>`
+  という warning 形式で包まれる (UserPromptSubmit にある `suppressOriginalPrompt` 相当は
+  この event には無い)。多少ノイジーだが実害なし
+
+### CLAUDE_SESSION_ID は Bash tool の環境変数には存在しない
+SKILL.md 内の `${CLAUDE_SESSION_ID}` は **harness が skill 展開時に文字列置換している**
+(Bash 環境で `echo $CLAUDE_SESSION_ID` は空)。hook からは stdin JSON の `session_id` を
+使う。hook 外 (nudge を受けた model の Bash 実行) には `peep.sh --session-id=<id>` の
+option 形式を追加した — `CLAUDE_SESSION_ID=x bash …` の env prefix 形式だと
+permission rule `Bash(bash …/peep.sh:*)` の prefix match に載らないため。
+
+### ミッション自動要約は UserPromptSubmit の context 注入に片寄せ
+登録が model を経由しなくなったので、「会話からミッションを 1 行要約」は
+user-prompt-submit.sh が登録済み & mission 未設定のセッションに**一度だけ** stdout で
+指示を注入し (`exit 0` の stdout は model への context になる)、次の通常ターンに便乗して
+実行させる。`mission_nudged` フラグを session JSON に立てて再注入を防ぐ。

@@ -91,12 +91,50 @@ merge_hook() {
   ' "$CLAUDE_SETTINGS" > "$TMP" && mv "$TMP" "$CLAUDE_SETTINGS"
 }
 
+# matcher 付き版。UserPromptExpansion の matcher は command_name にマッチする。
+merge_matcher_hook() {
+  local event="$1"      # 例: UserPromptExpansion
+  local matcher="$2"    # 例: peep
+  local script="$3"
+
+  local TMP
+  TMP=$(mktemp)
+  jq --arg event "$event" --arg matcher "$matcher" --arg cmd "$script" '
+    .hooks //= {} |
+    .hooks[$event] //= [] |
+    if (.hooks[$event] | map(.hooks[]?.command // empty) | any(. == $cmd)) then
+      .
+    else
+      .hooks[$event] += [{
+        "matcher": $matcher,
+        "hooks": [
+          {"type": "command", "command": $cmd}
+        ]
+      }]
+    end
+  ' "$CLAUDE_SETTINGS" > "$TMP" && mv "$TMP" "$CLAUDE_SETTINGS"
+}
+
 merge_hook "Notification"     "$HOOKS_DST/notification.sh"
 merge_hook "Stop"             "$HOOKS_DST/stop.sh"
 merge_hook "PreToolUse"       "$HOOKS_DST/pre-tool-use.sh"
 merge_hook "PostToolUse"      "$HOOKS_DST/post-tool-use.sh"
 merge_hook "SessionEnd"       "$HOOKS_DST/session-end.sh"
 merge_hook "UserPromptSubmit" "$HOOKS_DST/user-prompt-submit.sh"
+# /peep を skill 展開前に横取りして model turn なしで完結させる (要 Claude Code 2.1.204+)
+merge_matcher_hook "UserPromptExpansion" "peep" "$HOOKS_DST/user-prompt-expansion.sh"
+
+# ミッション自動要約 (user-prompt-submit.sh の nudge を受けて model が実行する
+# `bash ~/.claude/skills/peep/scripts/peep.sh --session-id=… mission "…"`) が
+# permission prompt で会話を止めないよう、この 1 コマンドだけ allowlist に足す。
+PEEP_ALLOW_RULE="Bash(bash $SKILL_DST/scripts/peep.sh:*)"
+TMP=$(mktemp)
+jq --arg rule "$PEEP_ALLOW_RULE" '
+  .permissions //= {} |
+  .permissions.allow //= [] |
+  if (.permissions.allow | index($rule)) then . else .permissions.allow += [$rule] end
+' "$CLAUDE_SETTINGS" > "$TMP" && mv "$TMP" "$CLAUDE_SETTINGS"
+echo "  permissions.allow: $PEEP_ALLOW_RULE"
 
 # ─────────────────────────────────────────────────────────────
 # 5. Overpeeped.app を ~/Applications/ にコピー (無ければ build.sh を呼ぶ)

@@ -7,6 +7,12 @@ license: MIT
 
 # /peep — overpeeped にセッションを登録する
 
+> **Note (フォールバック経路)**: 通常、ユーザーが `/peep` を打つと UserPromptExpansion hook
+> (`~/.overpeeped/hooks/user-prompt-expansion.sh`) が展開前に横取りして処理を完結させるため、
+> この skill は実行されない (model turn を消費しない)。この skill が読まれているのは、
+> hook が未インストール / 未対応バージョンか、model が Skill tool 経由で自発的に invoke した場合。
+> その場合は以下の手順どおりに実行すればよい。
+
 ユーザーが `/peep` slash command を実行しました。引数: `$ARGUMENTS`
 
 ## やること
