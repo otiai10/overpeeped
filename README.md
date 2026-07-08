@@ -33,7 +33,7 @@ make install              # build + 全部入り (skill / hooks / .app / CLI lau
 |---|---|
 | `~/.overpeeped/sessions/`, `~/.overpeeped/hooks/` | session 状態の保存場所と hook スクリプト |
 | `~/.claude/skills/peep/` | `/peep` slash command |
-| `~/.claude/settings.json` | hooks エントリを **jq でマージ** (既存設定は破壊しない、自動バックアップ付き) |
+| `~/.claude/settings.json` | hooks エントリ + `peep.sh` 用 permission allow rule 1 件を **jq でマージ** (既存設定は破壊しない、自動バックアップ付き) |
 | `~/Applications/Overpeeped.app` | アプリ本体 |
 | `~/.local/bin/overpeeped` | CLI ランチャ (`overpeeped` で起動 / `overpeeped --quit` で終了) |
 
@@ -70,6 +70,14 @@ Claude Code セッションの中で:
 /peep status              # 現在の状態と経過時間を表示
 /peep stop                # 監視を終了 (ヒナが消える)
 ```
+
+`/peep` は **main conversation をブロックしない**: UserPromptExpansion hook (Claude Code
+2.1.204+) が skill 展開前にコマンドを横取りして直接実行するため、`/rename` などの built-in
+command と同様に model turn を消費せず即座に完了する。hook が無い環境では従来どおり
+skill (`~/.claude/skills/peep/`) にフォールバックする。
+
+ミッション (マスコット下の 1 行ラベル) は、登録後の次の通常ターンで Claude が会話から
+自動要約して設定する (登録そのものを待たせない piggyback 方式)。
 
 ヒナの **5 段階の状態**:
 
